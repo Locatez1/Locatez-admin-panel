@@ -8,6 +8,7 @@ import {
 } from "../api/ideas.api";
 import { getCategories } from "../api/categories.api";
 import { Idea, Category } from "../types";
+import { useDebounce } from "../hooks/useDebounce";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
@@ -36,6 +37,7 @@ export const Ideas: React.FC = () => {
 
   // Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
 
   // Modals
@@ -81,7 +83,7 @@ export const Ideas: React.FC = () => {
     try {
       const res = await getAdminIdeas({
         categoryId: selectedCategoryFilter || undefined,
-        search: searchQuery.trim() || undefined,
+        search: debouncedSearchQuery.trim() || undefined,
       });
       const list = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
       setIdeas(list);
@@ -90,7 +92,7 @@ export const Ideas: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategoryFilter, searchQuery]);
+  }, [selectedCategoryFilter, debouncedSearchQuery]);
 
   useEffect(() => {
     fetchCategories();

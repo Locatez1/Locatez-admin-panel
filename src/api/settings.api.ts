@@ -3,38 +3,80 @@ import { ServiceAreaSettings, ServiceAreaMode } from "../types";
 
 export interface VideoRequestSettings {
   requireApprovalForAll: boolean;
+  requireFulfilmentMediaApproval: boolean;
+  minRewardVideo: number;
+  minRewardImage: number;
+  nearbyRadiusMeters: number;
 }
+
+export type UpdateVideoRequestSettingsInput = {
+  requireApprovalForAll?: boolean;
+  requireFulfilmentMediaApproval?: boolean;
+  minRewardVideo?: number;
+  minRewardImage?: number;
+  nearbyRadiusMeters?: number;
+};
 
 export interface ChatSettings {
   preAcceptanceMessageLimit: number;
 }
 
-export const getVideoRequestSettings = async () => {
-  const response = await apiClient.get<VideoRequestSettings | { success: boolean; data: VideoRequestSettings }>("/settings/video-requests");
-  // Handle both direct object response and wrapped response structure safely
-  const resData = response.data as any;
-  if (resData && typeof resData.requireApprovalForAll === "boolean") {
-    return resData as VideoRequestSettings;
-  }
-  if (resData && resData.data && typeof resData.data.requireApprovalForAll === "boolean") {
-    return resData.data as VideoRequestSettings;
-  }
-  return { requireApprovalForAll: false };
+const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
+  requireApprovalForAll: false,
+  requireFulfilmentMediaApproval: false,
+  minRewardVideo: 50,
+  minRewardImage: 20,
+  nearbyRadiusMeters: 5000,
 };
 
-export const updateVideoRequestSettings = async (requireApprovalForAll: boolean) => {
+const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null => {
+  const candidate =
+    resData && typeof resData.requireApprovalForAll === "boolean"
+      ? resData
+      : resData?.data && typeof resData.data.requireApprovalForAll === "boolean"
+        ? resData.data
+        : null;
+  if (!candidate) return null;
+  return {
+    requireApprovalForAll: !!candidate.requireApprovalForAll,
+    requireFulfilmentMediaApproval: !!candidate.requireFulfilmentMediaApproval,
+    minRewardVideo:
+      typeof candidate.minRewardVideo === "number"
+        ? candidate.minRewardVideo
+        : DEFAULT_VR_SETTINGS.minRewardVideo,
+    minRewardImage:
+      typeof candidate.minRewardImage === "number"
+        ? candidate.minRewardImage
+        : DEFAULT_VR_SETTINGS.minRewardImage,
+    nearbyRadiusMeters:
+      typeof candidate.nearbyRadiusMeters === "number"
+        ? candidate.nearbyRadiusMeters
+        : DEFAULT_VR_SETTINGS.nearbyRadiusMeters,
+  };
+};
+
+export const getVideoRequestSettings = async (): Promise<VideoRequestSettings> => {
+  const response = await apiClient.get<VideoRequestSettings | { success: boolean; data: VideoRequestSettings }>(
+    "/settings/video-requests"
+  );
+  return unwrapVideoRequestSettings(response.data as any) ?? { ...DEFAULT_VR_SETTINGS };
+};
+
+export const updateVideoRequestSettings = async (
+  input: UpdateVideoRequestSettingsInput
+): Promise<VideoRequestSettings> => {
   const response = await apiClient.patch<VideoRequestSettings | { success: boolean; data: VideoRequestSettings }>(
     "/settings/video-requests",
-    { requireApprovalForAll }
+    input
   );
-  const resData = response.data as any;
-  if (resData && typeof resData.requireApprovalForAll === "boolean") {
-    return resData as VideoRequestSettings;
-  }
-  if (resData && resData.data && typeof resData.data.requireApprovalForAll === "boolean") {
-    return resData.data as VideoRequestSettings;
-  }
-  return { requireApprovalForAll };
+  return unwrapVideoRequestSettings(response.data as any) ?? {
+    ...DEFAULT_VR_SETTINGS,
+    ...input,
+    requireApprovalForAll:
+      typeof input.requireApprovalForAll === "boolean"
+        ? input.requireApprovalForAll
+        : DEFAULT_VR_SETTINGS.requireApprovalForAll,
+  };
 };
 
 export const getChatSettings = async (): Promise<ChatSettings> => {

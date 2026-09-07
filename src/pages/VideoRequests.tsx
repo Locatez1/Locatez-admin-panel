@@ -5,23 +5,44 @@ import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
-import { Link } from "react-router-dom";
-import { Eye, AlertTriangle, Plus } from "lucide-react";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { Eye, AlertTriangle, Plus, MessageSquare } from "lucide-react";
 
 export const VideoRequests: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [requests, setRequests] = useState<VideoRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Pagination & Filters
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  // URL Search Parameter Driven Pagination & Filters
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const statusFilter = searchParams.get("status") || "";
+  const limit = 10;
+
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("");
 
   // Create Video Request Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const handlePageChange = (newPage: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("page", String(newPage));
+    setSearchParams(nextParams);
+  };
+
+  const handleStatusFilterChange = (newStatus: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("page", "1");
+    if (newStatus) {
+      nextParams.set("status", newStatus);
+    } else {
+      nextParams.delete("status");
+    }
+    setSearchParams(nextParams);
+  };
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -106,10 +127,7 @@ export const VideoRequests: React.FC = () => {
         <select
           className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6"
           value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => handleStatusFilterChange(e.target.value)}
         >
           <option value="">All Statuses</option>
           <option value="PENDING">PENDING</option>
@@ -174,9 +192,20 @@ export const VideoRequests: React.FC = () => {
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     {new Date(request.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <Link to={`/video-requests/${request.id}`} className="text-blue-600 hover:text-blue-900">
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 flex items-center justify-end gap-2.5">
+                    <Link
+                      to={`/video-requests/${request.id}${location.search}`}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="View Request Details"
+                    >
                       <Eye className="h-5 w-5" />
+                    </Link>
+                    <Link
+                      to={`/video-requests/${request.id}${location.search}#request-chat-audit`}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      title="View Request Chat & Communication"
+                    >
+                      <MessageSquare className="h-5 w-5" />
                     </Link>
                   </td>
                 </tr>
@@ -188,7 +217,7 @@ export const VideoRequests: React.FC = () => {
             limit={limit}
             total={total}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={handlePageChange}
           />
         </div>
       )}
@@ -202,3 +231,4 @@ export const VideoRequests: React.FC = () => {
     </div>
   );
 };
+

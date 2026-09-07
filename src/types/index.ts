@@ -97,7 +97,21 @@ export interface VideoRequest {
     fulfillerId?: string;
     fulfiller?: VideoRequestParty | null;
     status?: string;
+    videoUrl?: string;
+    videoStorageKey?: string;
+    videoKey?: string;
+    mediaUrl?: string;
+    playbackUrl?: string;
+    hlsUrl?: string;
+    thumbnailUrl?: string;
+    submittedAt?: string;
   } | null;
+  videoUrl?: string;
+  videoStorageKey?: string;
+  videoKey?: string;
+  mediaUrl?: string;
+  playbackUrl?: string;
+  thumbnailUrl?: string;
   categoryId: string;
   category?: Category | { id: string; name: string };
   rewardAmount: number;
@@ -106,7 +120,40 @@ export interface VideoRequest {
   createdAt: string;
   isRestrictedArea?: boolean;
   restrictedAreaType?: string;
+  restrictedReason?: string;
+  restrictionReason?: string;
   rejectionReason?: string;
+  customLocation?: {
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  } | null;
+  location?: {
+    address?: string;
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+    coordinates?: [number, number];
+  } | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  fulfilmentMedia?: {
+    latest: {
+      id: string;
+      status: "PENDING" | "APPROVED" | "REJECTED";
+      rejectionReason?: string | null;
+      canReview?: boolean;
+      items: Array<{
+        storageKey: string;
+        mimeType?: string | null;
+        kind: "VIDEO" | "IMAGE";
+        url?: string | null;
+      }>;
+    } | null;
+    history?: any[];
+    canReview?: boolean;
+  } | null;
 }
 
 export interface AuditLog {
@@ -148,7 +195,7 @@ export interface ApiError {
   errors?: any[];
 }
 
-export type ChatRoomState = "PRE_ACCEPTANCE" | "ACCEPTED" | "CANCELLED" | "COMPLETED";
+export type ChatRoomState = "PRE_ACCEPTANCE" | "ACCEPTED";
 
 export interface ChatRoom {
   id: string;
@@ -156,16 +203,20 @@ export interface ChatRoom {
   requesterId: string;
   fulfillerId: string;
   state: ChatRoomState;
-  fulfillerMessageCount: number;
-  preAcceptanceMessageLimit: number;
-  fulfillerMessagesRemaining: number;
+  fulfillerMessageCount?: number;
+  preAcceptanceMessageLimit?: number;
+  fulfillerMessagesRemaining?: number;
+  paidFollowupPrice?: number;
+  mediaDelivered?: boolean;
+  requester?: VideoRequestParty | User | any;
+  fulfiller?: VideoRequestParty | User | any;
   videoRequest?: {
     id: string;
     title: string;
     status: string;
   };
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface ChatMessage {
@@ -181,7 +232,8 @@ export interface ChatMessage {
     avatarUrl?: string;
   };
   content: string;
-  type?: "TEXT" | "IMAGE" | "SYSTEM" | string;
+  type?: "TEXT" | "SYSTEM" | "VIDEO" | "IMAGE" | "MEDIA" | string;
+  billing?: "FREE" | "PAID" | "MEDIA_DELIVERY" | string;
   createdAt: string;
 }
 
@@ -281,6 +333,46 @@ export interface ServiceArea {
 export interface ServiceAreaSettings {
   mode: ServiceAreaMode;
   areas: ServiceArea[];
+}
+
+export type TransactionType =
+  | "CREDIT"
+  | "DEBIT"
+  | "HOLD"
+  | "RELEASE"
+  | "REWARD"
+  | "REFUND"
+  | "PAYOUT"
+  | "DEPOSIT"
+  | "WITHDRAWAL";
+export type TransactionStatus = "COMPLETED" | "PENDING" | "FAILED" | "CANCELLED";
+
+export interface Wallet {
+  id?: string;
+  userId: string;
+  balance: number;
+  availableBalance?: number;
+  heldBalance?: number;
+  currency: string;
+  totalEarned?: number;
+  totalSpent?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  walletId?: string;
+  userId: string;
+  type: TransactionType;
+  amount: number;
+  balanceAfter?: number;
+  currency?: string;
+  description: string;
+  status: TransactionStatus;
+  referenceId?: string;
+  referenceType?: string;
+  createdAt: string;
 }
 
 

@@ -2,7 +2,6 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-// Parse URL search params or fallback to config
 const defaultConfig = {
   apiKey: "AIzaSyDmGYBCeyAUi7BMIXzQtNVQXsQqU_MZaTs",
   authDomain: "locatez-e6991.firebaseapp.com",
@@ -25,10 +24,48 @@ try {
     const notificationOptions = {
       body: payload.notification?.body || payload.data?.body || payload.data?.message || payload.data?.content || '',
       icon: payload.notification?.icon || payload.data?.icon || '/favicon.svg',
-      data: payload.data
+      data: {
+        ...(payload.data || {}),
+        path: payload.data?.path || '',
+        link: payload.data?.link || '',
+      },
     };
     self.registration.showNotification(notificationTitle, notificationOptions);
   });
 } catch (error) {
   console.error('[firebase-messaging-sw.js] Service Worker init error:', error);
 }
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  let target = data.link || data.path || '/';
+  if (typeof target === 'string' && target.startsWith('/') && self.location?.origin) {
+    target = self.location.origin + target;
+  }
+  if (!target || target === '/') {
+    target = self.location?.origin || '/';
+  }
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of allClients) {
+        if ('focus' in client) {
+          await client.focus();
+          if ('navigate' in client && typeof client.navigate === 'function') {
+            try {
+              await client.navigate(target);
+              return;
+            } catch (_) {}
+          }
+          client.postMessage({ type: 'NOTIFICATION_NAVIGATE', path: data.path || target, link: target });
+          return;
+        }
+      }
+      if (clients.openWindow) {
+        await clients.openWindow(target);
+      }
+    })()
+  );
+});

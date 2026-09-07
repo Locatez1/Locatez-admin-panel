@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAuditLogs } from "../api/auditLogs.api";
 import { AuditLog } from "../types";
+import { useDebounce } from "../hooks/useDebounce";
 import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Modal } from "../components/common/Modal";
@@ -19,6 +20,7 @@ export const AuditLogs: React.FC = () => {
   
   const [actionFilter, setActionFilter] = useState<string>("");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("");
+  const debouncedEntityTypeFilter = useDebounce(entityTypeFilter, 400);
 
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
@@ -27,7 +29,7 @@ export const AuditLogs: React.FC = () => {
     try {
       const params: any = { page, limit };
       if (actionFilter) params.action = actionFilter;
-      if (entityTypeFilter) params.entityType = entityTypeFilter;
+      if (debouncedEntityTypeFilter) params.entityType = debouncedEntityTypeFilter;
 
       const response = await getAuditLogs(params);
       setLogs(response.data);
@@ -42,7 +44,7 @@ export const AuditLogs: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, limit, actionFilter, entityTypeFilter]);
+  }, [page, limit, actionFilter, debouncedEntityTypeFilter]);
 
   return (
     <div className="space-y-6">

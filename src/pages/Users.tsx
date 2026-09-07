@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getUsers, createUser, updateUserStatus, deleteUser } from "../api/users.api";
 import { User, UserStatus } from "../types";
 import { useAuth } from "../context/AuthContext";
+import { useDebounce } from "../hooks/useDebounce";
 import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
@@ -24,6 +25,7 @@ export const Users: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -44,7 +46,7 @@ export const Users: React.FC = () => {
     setLoading(true);
     try {
       const params: any = { page, limit };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (roleFilter) params.role = roleFilter;
       if (statusFilter) params.status = statusFilter;
 
@@ -61,7 +63,7 @@ export const Users: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, limit, search, roleFilter, statusFilter]);
+  }, [page, limit, debouncedSearch, roleFilter, statusFilter]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();

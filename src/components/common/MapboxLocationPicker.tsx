@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Search, MapPin, Loader2, Navigation, AlertTriangle, Crosshair, Layers } from "lucide-react";
+import { useDebounce } from "../../hooks/useDebounce";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
 
@@ -47,6 +48,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
   // Map Style & Geolocation State
   const [mapStyle, setMapStyle] = useState<"streets" | "satellite" | "outdoors">("streets");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [searchResults, setSearchResults] = useState<MapboxSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -240,7 +242,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
 
   // Dynamic Mapbox Search using Mapbox Searchbox API (search/searchbox/v1/suggest) & v6 Forward API
   useEffect(() => {
-    const rawQuery = searchQuery.trim();
+    const rawQuery = debouncedSearchQuery.trim();
     if (!rawQuery) {
       setSearchResults([]);
       setIsSearching(false);
@@ -249,7 +251,8 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
 
     const cleanQuery = rawQuery.replace(/\bdehli\b/gi, "delhi");
 
-    const timer = setTimeout(async () => {
+    let isMounted = true;
+    const runSearch = async () => {
       setIsSearching(true);
       try {
         // Fetch from Mapbox Searchbox API v1/suggest & Mapbox v6 Forward Geocoding
@@ -265,6 +268,8 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
             )}&access_token=${MAPBOX_TOKEN}&limit=10`
           ),
         ]);
+
+        if (!isMounted) return;
 
         const results: MapboxSearchResult[] = [];
         const seen = new Set<string>();
@@ -333,12 +338,16 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
       } catch (err) {
         console.error("[Mapbox] Searchbox suggest error:", err);
       } finally {
-        setIsSearching(false);
+        if (isMounted) setIsSearching(false);
       }
-    }, 250);
+    };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    runSearch();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedSearchQuery]);
 
   // Handle Search Result Selection
   const handleSelectResult = async (result: MapboxSearchResult) => {

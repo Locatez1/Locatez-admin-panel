@@ -14,6 +14,7 @@ import { PopularPlacesFeed } from "../pages/PopularPlacesFeed";
 import { AdminPopularPlaces } from "../pages/AdminPopularPlaces";
 import { AuditLogs } from "../pages/AuditLogs";
 import { Settings } from "../pages/Settings";
+import { LocationRestrictions } from "../pages/LocationRestrictions";
 import { Marketplace } from "../pages/Marketplace";
 import { Unauthorized } from "../pages/Unauthorized";
 import { LiveKitChatDemo } from "../pages/LiveKitChatDemo";
@@ -56,6 +57,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/popular-places-admin" element={<Navigate to="/admin/popular-places" replace />} />
           <Route path="/admin/popular-places" element={<AdminPopularPlaces />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/location-restrictions" element={<LocationRestrictions />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>

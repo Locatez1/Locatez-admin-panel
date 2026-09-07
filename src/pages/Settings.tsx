@@ -13,7 +13,7 @@ import { ServiceAreaSettings, ServiceAreaMode, ServiceArea } from "../types";
 import { Switch } from "../components/common/Switch";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
-import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin } from "lucide-react";
+import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar } from "lucide-react";
 
 export const Settings: React.FC = () => {
   const { role } = useAuth();
@@ -23,6 +23,15 @@ export const Settings: React.FC = () => {
 
   // Video Requests Setting State
   const [requireApproval, setRequireApproval] = useState<boolean>(false);
+  const [requireMediaApproval, setRequireMediaApproval] = useState<boolean>(false);
+  const [confirmedMinRewardVideo, setConfirmedMinRewardVideo] = useState<number>(50);
+  const [confirmedMinRewardImage, setConfirmedMinRewardImage] = useState<number>(20);
+  const [confirmedNearbyRadius, setConfirmedNearbyRadius] = useState<number>(5000);
+  const [minRewardVideoInput, setMinRewardVideoInput] = useState<string>("50");
+  const [minRewardImageInput, setMinRewardImageInput] = useState<string>("20");
+  const [nearbyRadiusInput, setNearbyRadiusInput] = useState<string>("5000");
+  const [economyValidationError, setEconomyValidationError] = useState<string | null>(null);
+  const [economySaving, setEconomySaving] = useState<boolean>(false);
 
   // Chat Settings State
   const [confirmedChatLimit, setConfirmedChatLimit] = useState<number>(50);
@@ -65,6 +74,14 @@ export const Settings: React.FC = () => {
       ]);
 
       setRequireApproval(!!vrData.requireApprovalForAll);
+      setRequireMediaApproval(!!vrData.requireFulfilmentMediaApproval);
+      setConfirmedMinRewardVideo(vrData.minRewardVideo);
+      setConfirmedMinRewardImage(vrData.minRewardImage);
+      setConfirmedNearbyRadius(vrData.nearbyRadiusMeters);
+      setMinRewardVideoInput(String(vrData.minRewardVideo));
+      setMinRewardImageInput(String(vrData.minRewardImage));
+      setNearbyRadiusInput(String(vrData.nearbyRadiusMeters));
+      setEconomyValidationError(null);
 
       const limit = typeof chatData.preAcceptanceMessageLimit === "number"
         ? chatData.preAcceptanceMessageLimit
@@ -95,6 +112,29 @@ export const Settings: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
+  const handleMediaApprovalToggle = async (newValue: boolean) => {
+    if (!isAdmin || actionLoading) return;
+    const previous = requireMediaApproval;
+    setRequireMediaApproval(newValue);
+    setActionLoading(true);
+    try {
+      const response = await updateVideoRequestSettings({
+        requireFulfilmentMediaApproval: newValue,
+      });
+      setRequireMediaApproval(!!response.requireFulfilmentMediaApproval);
+      toast.success(
+        newValue
+          ? "Fulfilment media now requires moderator approval."
+          : "Fulfilment media will deliver directly to requesters."
+      );
+    } catch {
+      setRequireMediaApproval(previous);
+      toast.error("Failed to update fulfilment media approval setting.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleConfirmUpdate = async () => {
     const previousState = requireApproval;
     const targetState = pendingValue;
@@ -103,7 +143,7 @@ export const Settings: React.FC = () => {
     setActionLoading(true);
 
     try {
-      const response = await updateVideoRequestSettings(targetState);
+      const response = await updateVideoRequestSettings({ requireApprovalForAll: targetState });
       const newState = typeof response.requireApprovalForAll === "boolean"
         ? response.requireApprovalForAll
         : targetState;
@@ -121,6 +161,105 @@ export const Settings: React.FC = () => {
       setActionLoading(false);
     }
   };
+
+  const validatePositiveMoney = (value: string, label: string): string | null => {
+    if (!value || value.trim() === "") return `${label} is required.`;
+    const num = Number(value);
+    if (isNaN(num)) return `${label} must be a valid number.`;
+    if (num <= 0) return `${label} must be greater than 0.`;
+    if (num > 1_000_000) return `${label} must be at most 1000000.`;
+    return null;
+  };
+
+  const validateNearbyRadius = (value: string): string | null => {
+    if (!value || value.trim() === "") return "Nearby radius is required.";
+    const num = Number(value);
+    if (isNaN(num)) return "Nearby radius must be a valid number.";
+    if (!Number.isInteger(num) || value.includes(".")) {
+      return "Nearby radius must be a whole number (meters).";
+    }
+    if (num < 100 || num > 1_000_000) {
+      return "Nearby radius must be between 100 and 1000000 meters.";
+    }
+    return null;
+  };
+
+  const validateEconomyInputs = (): string | null =>
+    validatePositiveMoney(minRewardVideoInput, "Minimum video reward") ||
+    validatePositiveMoney(minRewardImageInput, "Minimum image reward") ||
+    validateNearbyRadius(nearbyRadiusInput);
+
+  const handleEconomyFieldChange = (
+    field: "video" | "image" | "radius",
+    value: string
+  ) => {
+    if (field === "video") setMinRewardVideoInput(value);
+    else if (field === "image") setMinRewardImageInput(value);
+    else setNearbyRadiusInput(value);
+
+    const nextVideo = field === "video" ? value : minRewardVideoInput;
+    const nextImage = field === "image" ? value : minRewardImageInput;
+    const nextRadius = field === "radius" ? value : nearbyRadiusInput;
+    setEconomyValidationError(
+      validatePositiveMoney(nextVideo, "Minimum video reward") ||
+        validatePositiveMoney(nextImage, "Minimum image reward") ||
+        validateNearbyRadius(nextRadius)
+    );
+  };
+
+  const handleSaveEconomySettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAdmin || economySaving) return;
+
+    const validationErr = validateEconomyInputs();
+    if (validationErr) {
+      setEconomyValidationError(validationErr);
+      return;
+    }
+
+    const minRewardVideo = Math.round(Number(minRewardVideoInput) * 100) / 100;
+    const minRewardImage = Math.round(Number(minRewardImageInput) * 100) / 100;
+    const nearbyRadiusMeters = parseInt(nearbyRadiusInput, 10);
+
+    const unchanged =
+      minRewardVideo === confirmedMinRewardVideo &&
+      minRewardImage === confirmedMinRewardImage &&
+      nearbyRadiusMeters === confirmedNearbyRadius;
+    if (unchanged) return;
+
+    setEconomySaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({
+        minRewardVideo,
+        minRewardImage,
+        nearbyRadiusMeters,
+      });
+      setConfirmedMinRewardVideo(updated.minRewardVideo);
+      setConfirmedMinRewardImage(updated.minRewardImage);
+      setConfirmedNearbyRadius(updated.nearbyRadiusMeters);
+      setMinRewardVideoInput(String(updated.minRewardVideo));
+      setMinRewardImageInput(String(updated.minRewardImage));
+      setNearbyRadiusInput(String(updated.nearbyRadiusMeters));
+      setEconomyValidationError(null);
+      toast.success("Request economy settings updated successfully.");
+    } catch (err: any) {
+      setMinRewardVideoInput(String(confirmedMinRewardVideo));
+      setMinRewardImageInput(String(confirmedMinRewardImage));
+      setNearbyRadiusInput(String(confirmedNearbyRadius));
+      setEconomyValidationError(null);
+      toast.error(err.response?.data?.message || "Failed to update request economy settings.");
+    } finally {
+      setEconomySaving(false);
+    }
+  };
+
+  const isEconomySaveDisabled =
+    !isAdmin ||
+    economySaving ||
+    !!economyValidationError ||
+    (Number(minRewardVideoInput) === confirmedMinRewardVideo &&
+      Number(minRewardImageInput) === confirmedMinRewardImage &&
+      parseInt(nearbyRadiusInput, 10) === confirmedNearbyRadius);
 
   // Chat Settings Input Validation & Handlers
   const validateChatInput = (value: string): string | null => {
@@ -468,6 +607,31 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
 
+              <div className="flex items-start justify-between gap-6 border-t border-gray-100 pt-6">
+                <div className="space-y-1">
+                  <label
+                    htmlFor="media-approval-switch"
+                    className="text-base font-medium text-gray-900 cursor-pointer"
+                  >
+                    Require approval for fulfilment media
+                  </label>
+                  <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+                    {requireMediaApproval
+                      ? "Submitted video/image goes to moderators first. Requesters only see media after approval."
+                      : "Submitted video/image is delivered directly to the requester (still stored for admin review of completed requests)."}
+                  </p>
+                </div>
+                <div className="flex items-center pt-1">
+                  <Switch
+                    id="media-approval-switch"
+                    checked={requireMediaApproval}
+                    onChange={handleMediaApprovalToggle}
+                    disabled={!isAdmin || actionLoading}
+                    label="Require approval for fulfilment media"
+                  />
+                </div>
+              </div>
+
               {/* Clarification Box / Matrix Card */}
               <div className="rounded-lg bg-blue-50/70 p-4 border border-blue-200/80 space-y-3">
                 <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
@@ -521,6 +685,90 @@ export const Settings: React.FC = () => {
                     </ul>
                   </div>
                 </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-6">
+                <form onSubmit={handleSaveEconomySettings} className="space-y-5">
+                  <div className="flex items-center gap-2">
+                    <IndianRupee className="h-4 w-4 text-primary" />
+                    <h3 className="text-base font-medium text-gray-900">Minimum rewards & nearby radius</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    These values apply when users create video/image requests and when nearby discovery or push notifications use the default radius.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label htmlFor="min-reward-video" className="block text-sm font-medium text-gray-900 mb-1">
+                        Min video reward (INR)
+                      </label>
+                      <input
+                        id="min-reward-video"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        disabled={!isAdmin || economySaving}
+                        value={minRewardVideoInput}
+                        onChange={(e) => handleEconomyFieldChange("video", e.target.value)}
+                        className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="min-reward-image" className="block text-sm font-medium text-gray-900 mb-1">
+                        Min image reward (INR)
+                      </label>
+                      <input
+                        id="min-reward-image"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        disabled={!isAdmin || economySaving}
+                        value={minRewardImageInput}
+                        onChange={(e) => handleEconomyFieldChange("image", e.target.value)}
+                        className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="nearby-radius" className="block text-sm font-medium text-gray-900 mb-1">
+                        <span className="inline-flex items-center gap-1">
+                          <Radar className="h-3.5 w-3.5" />
+                          Nearby radius (m)
+                        </span>
+                      </label>
+                      <input
+                        id="nearby-radius"
+                        type="number"
+                        min="100"
+                        step="1"
+                        disabled={!isAdmin || economySaving}
+                        value={nearbyRadiusInput}
+                        onChange={(e) => handleEconomyFieldChange("radius", e.target.value)}
+                        className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  {economyValidationError && (
+                    <p className="text-xs text-red-600 font-medium">{economyValidationError}</p>
+                  )}
+
+                  {!isAdmin && (
+                    <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded inline-block font-medium">
+                      Note: As a Moderator, you can view these settings but cannot modify them.
+                    </p>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      isLoading={economySaving}
+                      disabled={isEconomySaveDisabled}
+                    >
+                      Save economy settings
+                    </Button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

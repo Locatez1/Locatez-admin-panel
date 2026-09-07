@@ -84,19 +84,32 @@ export const ensureFcmToken = async (): Promise<string | null> => {
       // Listen for foreground notifications
       onMessage(messagingInstance, (payload) => {
         console.log("[FCM] Foreground notification received:", payload);
-        
-        // Display native browser notification for foreground messages
+
         const title = payload.notification?.title || payload.data?.title || "New Notification";
         const body = payload.notification?.body || payload.data?.body || payload.data?.message || payload.data?.content || "";
         const icon = payload.notification?.icon || payload.data?.icon || "/favicon.svg";
+        const path = payload.data?.path || "";
+        const link = payload.data?.link || "";
 
         if ("Notification" in window && Notification.permission === "granted") {
           try {
-            new Notification(title, {
+            const n = new Notification(title, {
               body,
               icon,
-              data: payload.data,
+              data: { ...(payload.data || {}), path, link },
             });
+            n.onclick = () => {
+              window.focus();
+              const target = link || path;
+              if (target) {
+                if (target.startsWith("http")) {
+                  window.location.href = target;
+                } else {
+                  window.location.assign(target.startsWith("/") ? target : `/${target}`);
+                }
+              }
+              n.close();
+            };
           } catch (e) {
             console.warn("[FCM] Error displaying native foreground notification:", e);
           }

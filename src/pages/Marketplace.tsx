@@ -17,6 +17,7 @@ import { Input } from "../components/common/Input";
 import { MapboxLocationPicker } from "../components/common/MapboxLocationPicker";
 import { Pagination } from "../components/common/Pagination";
 import { useToast } from "../context/ToastContext";
+import { useDebounce } from "../hooks/useDebounce";
 import {
   Store,
   Plus,
@@ -52,6 +53,7 @@ export const Marketplace: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortFilter, setSortFilter] = useState("newest");
@@ -83,7 +85,7 @@ export const Marketplace: React.FC = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState<number | "">(10);
   const [durationSeconds, setDurationSeconds] = useState<number | "">(60);
-  const [videoStorageKey, setVideoStorageKey] = useState("videos/sample_video.mp4");
+  const [videoStorageKey, setVideoStorageKey] = useState("");
   const [thumbnailStorageKey, setThumbnailStorageKey] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
@@ -115,7 +117,7 @@ export const Marketplace: React.FC = () => {
     setError(null);
     try {
       const params: any = { page, limit, sort: sortFilter };
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (statusFilter) params.status = statusFilter;
       if (categoryFilter) params.categoryId = categoryFilter;
 
@@ -171,7 +173,7 @@ export const Marketplace: React.FC = () => {
     } else {
       fetchPurchases();
     }
-  }, [activeTab, page, limit, search, statusFilter, categoryFilter, sortFilter]);
+  }, [activeTab, page, limit, debouncedSearch, statusFilter, categoryFilter, sortFilter]);
 
   // Handle Video File Upload
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
