@@ -9,6 +9,7 @@ import {
 } from "../api/chats.api";
 import { SocketService, SocketStatus } from "../services/socket.service";
 import { ChatRoom, ChatMessage } from "../types";
+import { ChatMessageContent } from "../components/common/ChatMessageContent";
 import { MessageSquare, RefreshCw, Send, ArrowLeft, ShieldAlert, CheckCircle2, Radio, UserCheck, Lock } from "lucide-react";
 
 export const LiveKitChatDemo: React.FC = () => {
@@ -505,7 +506,11 @@ export const LiveKitChatDemo: React.FC = () => {
                           : "bg-white text-gray-900 border border-gray-200 rounded-bl-none"
                       }`}
                     >
-                      {msg.content}
+                      <ChatMessageContent
+                        content={msg.content}
+                        type={msg.type}
+                        isOwnMessage={isOwnMessage}
+                      />
                     </div>
                   </div>
                 );

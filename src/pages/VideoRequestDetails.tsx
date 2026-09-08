@@ -12,6 +12,7 @@ import {
   extractMessagesList,
 } from "../api/chats.api";
 import { VideoRequest, ChatRoom, ChatMessage } from "../types";
+import { ChatMessageContent } from "../components/common/ChatMessageContent";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
@@ -1021,8 +1022,6 @@ export const VideoRequestDetails: React.FC = () => {
                   ? "System Notice"
                   : msg.senderName || `User ${senderId.slice(0, 8)}`;
 
-                const isMediaMsg = msg.type === "VIDEO" || msg.type === "MEDIA" || msg.content?.includes(".mp4") || msg.content?.includes("http");
-
                 return (
                   <div
                     key={msg.id}
@@ -1075,15 +1074,11 @@ export const VideoRequestDetails: React.FC = () => {
                           : "bg-gray-800 text-gray-100 rounded-lg"
                       }`}
                     >
-                      <p className="leading-relaxed">{msg.content}</p>
-
-                      {isMediaMsg && (
-                        <div className="mt-2 pt-2 border-t border-gray-200/20">
-                          <span className="text-[11px] font-semibold flex items-center gap-1 text-amber-300">
-                            <Film className="h-3.5 w-3.5" /> Media Attachment Present
-                          </span>
-                        </div>
-                      )}
+                      <ChatMessageContent
+                        content={msg.content}
+                        type={msg.type}
+                        isOwnMessage={false}
+                      />
                     </div>
                   </div>
                 );

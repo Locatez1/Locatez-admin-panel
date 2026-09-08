@@ -609,7 +609,7 @@ export const Settings: React.FC = () => {
                     htmlFor="video-approval-switch"
                     className="text-base font-medium text-gray-900 cursor-pointer"
                   >
-                    Require approval for all video requests
+                    Require approval for creating any video request
                   </label>
                   <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
                     {requireApproval
@@ -629,8 +629,63 @@ export const Settings: React.FC = () => {
                     checked={requireApproval}
                     onChange={handleToggleClick}
                     disabled={!isAdmin || actionLoading}
-                    label="Require approval for all video requests"
+                    label="Require approval for creating any video request"
                   />
+                </div>
+              </div>
+
+              {/* Clarification Box / Matrix Card */}
+              <div className="rounded-lg bg-blue-50/70 p-4 border border-blue-200/80 space-y-3">
+                <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
+                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span>Restriction Policy & Approval Matrix</span>
+                </div>
+                <p className="text-xs text-blue-800 leading-normal">
+                  This switch specifically controls approval requirements for <strong>otherwise-valid video requests</strong>. It does not override or allow hard-restricted locations.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
+                    <div className="font-semibold text-gray-900 flex items-center justify-between">
+                      <span>When Switch is OFF:</span>
+                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-normal">Default</span>
+                    </div>
+                    <ul className="space-y-1 text-gray-700">
+                      <li className="flex items-center gap-1.5">
+                        <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                        <span><strong>HARD:</strong> Blocked</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                        <span><strong>CONDITIONAL:</strong> Moderator approval</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        <span><strong>NORMAL:</strong> Created normally</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
+                    <div className="font-semibold text-gray-900 flex items-center justify-between">
+                      <span>When Switch is ON:</span>
+                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-normal">Strict</span>
+                    </div>
+                    <ul className="space-y-1 text-gray-700">
+                      <li className="flex items-center gap-1.5">
+                        <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                        <span><strong>HARD:</strong> Blocked</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                        <span><strong>CONDITIONAL:</strong> Moderator approval</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                        <span><strong>NORMAL:</strong> Moderator approval</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 
@@ -698,61 +753,6 @@ export const Settings: React.FC = () => {
                   >
                     Save
                   </Button>
-                </div>
-              </div>
-
-              {/* Clarification Box / Matrix Card */}
-              <div className="rounded-lg bg-blue-50/70 p-4 border border-blue-200/80 space-y-3">
-                <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
-                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span>Restriction Policy & Approval Matrix</span>
-                </div>
-                <p className="text-xs text-blue-800 leading-normal">
-                  This switch specifically controls approval requirements for <strong>otherwise-valid video requests</strong>. It does not override or allow hard-restricted locations.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
-                    <div className="font-semibold text-gray-900 flex items-center justify-between">
-                      <span>When Switch is OFF:</span>
-                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-normal">Default</span>
-                    </div>
-                    <ul className="space-y-1 text-gray-700">
-                      <li className="flex items-center gap-1.5">
-                        <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-                        <span><strong>HARD:</strong> Blocked</span>
-                      </li>
-                      <li className="flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                        <span><strong>CONDITIONAL:</strong> Moderator approval</span>
-                      </li>
-                      <li className="flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                        <span><strong>NORMAL:</strong> Created normally</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
-                    <div className="font-semibold text-gray-900 flex items-center justify-between">
-                      <span>When Switch is ON:</span>
-                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-normal">Strict</span>
-                    </div>
-                    <ul className="space-y-1 text-gray-700">
-                      <li className="flex items-center gap-1.5">
-                        <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-                        <span><strong>HARD:</strong> Blocked</span>
-                      </li>
-                      <li className="flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                        <span><strong>CONDITIONAL:</strong> Moderator approval</span>
-                      </li>
-                      <li className="flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                        <span><strong>NORMAL:</strong> Moderator approval</span>
-                      </li>
-                    </ul>
-                  </div>
                 </div>
               </div>
 
@@ -904,7 +904,7 @@ export const Settings: React.FC = () => {
       <Modal
         isOpen={isConfirmModalOpen}
         onClose={() => !actionLoading && setIsConfirmModalOpen(false)}
-        title={pendingValue ? "Enable approval for all video requests?" : "Disable approval for all video requests?"}
+        title={pendingValue ? "Enable approval for creating any video request?" : "Disable approval for creating any video request?"}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 leading-relaxed">
