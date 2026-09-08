@@ -144,15 +144,17 @@ export interface VideoRequest {
       status: "PENDING" | "APPROVED" | "REJECTED";
       rejectionReason?: string | null;
       canReview?: boolean;
+      pendingExpiresAt?: string | null;
+      pendingExpiresAtIst?: string | null;
+      pendingExpiresInMinutes?: number | null;
       items: Array<{
         storageKey: string;
         mimeType?: string | null;
         kind: "VIDEO" | "IMAGE";
         url?: string | null;
+        playable?: boolean;
       }>;
     } | null;
-    history?: any[];
-    canReview?: boolean;
   } | null;
 }
 

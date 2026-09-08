@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { getVideoRequestById, approveVideoRequest, rejectVideoRequest } from "../api/videoRequests.api";
 import {
+  approveFulfilmentMedia,
+  rejectFulfilmentMedia,
+} from "../api/fulfilmentMedia.api";
+import {
   getAdminChatRoomsForRequest,
   getAdminChatMessages,
   extractRoomsList,
@@ -28,7 +32,8 @@ import {
   ChevronRight,
   RefreshCw,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export const VideoRequestDetails: React.FC = () => {
@@ -43,6 +48,10 @@ export const VideoRequestDetails: React.FC = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [isMediaRejectModalOpen, setIsMediaRejectModalOpen] = useState(false);
+  const [mediaRejectionReason, setMediaRejectionReason] = useState("");
+  const [mediaActionLoading, setMediaActionLoading] = useState(false);
 
   // Video State
   const [chatVideoUrl, setChatVideoUrl] = useState<string | null>(null);
@@ -228,6 +237,36 @@ export const VideoRequestDetails: React.FC = () => {
     }
   };
 
+  const handleApproveFulfilmentMedia = async (mediaId: string) => {
+    if (!window.confirm("Approve this fulfilment media and deliver it to the requester?")) return;
+    setMediaActionLoading(true);
+    try {
+      await approveFulfilmentMedia(mediaId);
+      await fetchRequest();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to approve fulfilment media");
+    } finally {
+      setMediaActionLoading(false);
+    }
+  };
+
+  const handleRejectFulfilmentMedia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const mediaId = request?.fulfilmentMedia?.latest?.id;
+    if (!mediaId) return;
+    setMediaActionLoading(true);
+    try {
+      await rejectFulfilmentMedia(mediaId, mediaRejectionReason.trim());
+      setIsMediaRejectModalOpen(false);
+      setMediaRejectionReason("");
+      await fetchRequest();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to reject fulfilment media");
+    } finally {
+      setMediaActionLoading(false);
+    }
+  };
+
   const getLocationAddress = (req: VideoRequest) => {
     if (req.customLocation?.address) return req.customLocation.address;
     if (req.location?.address) return req.location.address;
@@ -378,6 +417,22 @@ export const VideoRequestDetails: React.FC = () => {
   const rawVideoUrl = getVideoUrl(request);
   const thumbnailUrl = getThumbnailUrl(request);
   const activeVideoUrl = rawVideoUrl || chatVideoUrl;
+  const fulfilmentLatest = request.fulfilmentMedia?.latest ?? null;
+  const fulfilmentItems = fulfilmentLatest?.items ?? [];
+  const canReviewFulfilmentMedia = fulfilmentLatest?.status === "PENDING";
+
+  const getFulfilmentMediaStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="warning">MEDIA PENDING APPROVAL</Badge>;
+      case "APPROVED":
+        return <Badge variant="success">MEDIA APPROVED</Badge>;
+      case "REJECTED":
+        return <Badge variant="danger">MEDIA REJECTED</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -615,6 +670,144 @@ export const VideoRequestDetails: React.FC = () => {
               </dd>
             </div>
           </dl>
+        </div>
+      </div>
+
+      {/* Fulfilment Media Moderation */}
+      <div id="fulfilment-media-review" className="overflow-hidden bg-white shadow sm:rounded-lg border border-gray-200">
+        <div className="px-4 py-5 sm:px-6 flex items-center justify-between border-b border-gray-200 bg-gray-50 flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <Film className="h-5 w-5 text-amber-600" />
+            <div>
+              <h3 className="text-lg font-medium leading-6 text-gray-900">Fulfilment Media</h3>
+              <p className="text-xs text-gray-500">
+                Media submitted by the fulfiller for delivery. When approval is required, review here before the requester sees it.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            {fulfilmentLatest ? getFulfilmentMediaStatusBadge(fulfilmentLatest.status) : (
+              <span className="text-xs text-gray-500 italic">No fulfilment media submitted</span>
+            )}
+            {canReviewFulfilmentMedia && fulfilmentLatest && (
+              <div className="flex gap-2 border-l pl-3 border-gray-300">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleApproveFulfilmentMedia(fulfilmentLatest.id)}
+                  isLoading={mediaActionLoading}
+                  className="bg-green-600 hover:bg-green-700 border-green-600"
+                >
+                  <Check className="mr-1 h-4 w-4" /> Approve Media
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setIsMediaRejectModalOpen(true)}
+                  disabled={mediaActionLoading}
+                >
+                  <X className="mr-1 h-4 w-4" /> Reject Media
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 space-y-4">
+          {fulfilmentLatest?.status === "PENDING" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-900 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p>
+                  This media is waiting for moderator approval. It has <strong>not</strong> been delivered to the requester yet.
+                </p>
+                {(fulfilmentLatest.pendingExpiresAtIst || fulfilmentLatest.pendingExpiresAt) && (
+                  <p className="mt-1 text-xs text-amber-800">
+                    Auto-approves at{" "}
+                    <strong>{fulfilmentLatest.pendingExpiresAtIst || fulfilmentLatest.pendingExpiresAt}</strong>
+                    {typeof fulfilmentLatest.pendingExpiresInMinutes === "number" && (
+                      <> ({fulfilmentLatest.pendingExpiresInMinutes} min remaining)</>
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {fulfilmentLatest?.status === "REJECTED" && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-800">
+              <p className="font-medium">Media rejected</p>
+              {fulfilmentLatest.rejectionReason && (
+                <p className="mt-1 text-red-700">Reason: {fulfilmentLatest.rejectionReason}</p>
+              )}
+            </div>
+          )}
+
+          {fulfilmentItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fulfilmentItems.map((item, idx) => {
+                const url = item.url ? formatMediaUrl(item.url) : null;
+                const isVideo =
+                  item.kind === "VIDEO" ||
+                  Boolean(item.mimeType?.startsWith("video/")) ||
+                  /\.(mp4|webm|mov)(\?|$)/i.test(item.storageKey || "");
+                return (
+                  <div
+                    key={`${item.storageKey}-${idx}`}
+                    className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50"
+                  >
+                    <div className="aspect-video bg-black flex items-center justify-center">
+                      {url ? (
+                        isVideo ? (
+                          <video
+                            src={url}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="w-full h-full max-h-[360px] object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={url}
+                            alt={`Fulfilment media ${idx + 1}`}
+                            className="w-full h-full max-h-[360px] object-contain"
+                          />
+                        )
+                      ) : (
+                        <div className="text-center text-gray-400 p-4">
+                          {isVideo ? <Video className="mx-auto h-8 w-8" /> : <ImageIcon className="mx-auto h-8 w-8" />}
+                          <p className="mt-2 text-xs">Preview URL unavailable</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 flex items-center justify-between gap-2 text-xs text-gray-600">
+                      <span className="font-medium text-gray-800">
+                        {item.kind || (isVideo ? "VIDEO" : "IMAGE")} #{idx + 1}
+                      </span>
+                      {url && (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" /> Open
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 px-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+              <Film className="mx-auto h-9 w-9 text-gray-300" />
+              <h4 className="mt-2 text-sm font-medium text-gray-900">No fulfilment media yet</h4>
+              <p className="mt-1 text-xs text-gray-500 max-w-md mx-auto">
+                When the fulfiller submits via <code className="bg-gray-200 px-1 rounded">POST /fulfilment/media</code>, it will show here for review.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -969,6 +1162,42 @@ export const VideoRequestDetails: React.FC = () => {
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={() => setIsRejectModalOpen(false)}>Cancel</Button>
             <Button type="submit" variant="danger" isLoading={actionLoading}>Confirm Reject</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isMediaRejectModalOpen}
+        onClose={() => setIsMediaRejectModalOpen(false)}
+        title="Reject Fulfilment Media"
+      >
+        <form onSubmit={handleRejectFulfilmentMedia} className="space-y-4">
+          <div>
+            <label htmlFor="media-reason" className="block text-sm font-medium text-gray-700 mb-1">
+              Rejection Reason (required)
+            </label>
+            <textarea
+              id="media-reason"
+              rows={4}
+              required
+              className="block w-full rounded-md border border-gray-300 p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="e.g. Wrong location, blurry, incomplete..."
+              value={mediaRejectionReason}
+              onChange={(e) => setMediaRejectionReason(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="ghost" onClick={() => setIsMediaRejectModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              isLoading={mediaActionLoading}
+              disabled={!mediaRejectionReason.trim()}
+            >
+              Confirm Reject Media
+            </Button>
           </div>
         </form>
       </Modal>

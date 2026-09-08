@@ -4,6 +4,7 @@ import { ServiceAreaSettings, ServiceAreaMode } from "../types";
 export interface VideoRequestSettings {
   requireApprovalForAll: boolean;
   requireFulfilmentMediaApproval: boolean;
+  fulfilmentMediaPendingExpiresInMinutes: number;
   minRewardVideo: number;
   minRewardImage: number;
   nearbyRadiusMeters: number;
@@ -12,6 +13,7 @@ export interface VideoRequestSettings {
 export type UpdateVideoRequestSettingsInput = {
   requireApprovalForAll?: boolean;
   requireFulfilmentMediaApproval?: boolean;
+  fulfilmentMediaPendingExpiresInMinutes?: number;
   minRewardVideo?: number;
   minRewardImage?: number;
   nearbyRadiusMeters?: number;
@@ -24,6 +26,7 @@ export interface ChatSettings {
 const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   requireApprovalForAll: false,
   requireFulfilmentMediaApproval: false,
+  fulfilmentMediaPendingExpiresInMinutes: 10,
   minRewardVideo: 50,
   minRewardImage: 20,
   nearbyRadiusMeters: 5000,
@@ -40,6 +43,10 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
   return {
     requireApprovalForAll: !!candidate.requireApprovalForAll,
     requireFulfilmentMediaApproval: !!candidate.requireFulfilmentMediaApproval,
+    fulfilmentMediaPendingExpiresInMinutes:
+      typeof candidate.fulfilmentMediaPendingExpiresInMinutes === "number"
+        ? candidate.fulfilmentMediaPendingExpiresInMinutes
+        : DEFAULT_VR_SETTINGS.fulfilmentMediaPendingExpiresInMinutes,
     minRewardVideo:
       typeof candidate.minRewardVideo === "number"
         ? candidate.minRewardVideo

@@ -24,6 +24,9 @@ export const Settings: React.FC = () => {
   // Video Requests Setting State
   const [requireApproval, setRequireApproval] = useState<boolean>(false);
   const [requireMediaApproval, setRequireMediaApproval] = useState<boolean>(false);
+  const [confirmedMediaPendingExpires, setConfirmedMediaPendingExpires] = useState<number>(10);
+  const [mediaPendingExpiresInput, setMediaPendingExpiresInput] = useState<string>("10");
+  const [mediaExpiresSaving, setMediaExpiresSaving] = useState<boolean>(false);
   const [confirmedMinRewardVideo, setConfirmedMinRewardVideo] = useState<number>(50);
   const [confirmedMinRewardImage, setConfirmedMinRewardImage] = useState<number>(20);
   const [confirmedNearbyRadius, setConfirmedNearbyRadius] = useState<number>(5000);
@@ -75,6 +78,8 @@ export const Settings: React.FC = () => {
 
       setRequireApproval(!!vrData.requireApprovalForAll);
       setRequireMediaApproval(!!vrData.requireFulfilmentMediaApproval);
+      setConfirmedMediaPendingExpires(vrData.fulfilmentMediaPendingExpiresInMinutes ?? 10);
+      setMediaPendingExpiresInput(String(vrData.fulfilmentMediaPendingExpiresInMinutes ?? 10));
       setConfirmedMinRewardVideo(vrData.minRewardVideo);
       setConfirmedMinRewardImage(vrData.minRewardImage);
       setConfirmedNearbyRadius(vrData.nearbyRadiusMeters);
@@ -132,6 +137,28 @@ export const Settings: React.FC = () => {
       toast.error("Failed to update fulfilment media approval setting.");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSaveMediaPendingExpires = async () => {
+    if (!isAdmin || mediaExpiresSaving) return;
+    const minutes = parseInt(mediaPendingExpiresInput, 10);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 10080) {
+      toast.error("Pending expiry must be an integer between 1 and 10080 minutes.");
+      return;
+    }
+    setMediaExpiresSaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({
+        fulfilmentMediaPendingExpiresInMinutes: minutes,
+      });
+      setConfirmedMediaPendingExpires(updated.fulfilmentMediaPendingExpiresInMinutes);
+      setMediaPendingExpiresInput(String(updated.fulfilmentMediaPendingExpiresInMinutes));
+      toast.success("Fulfilment media pending expiry updated.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update pending expiry.");
+    } finally {
+      setMediaExpiresSaving(false);
     }
   };
 
@@ -629,6 +656,48 @@ export const Settings: React.FC = () => {
                     disabled={!isAdmin || actionLoading}
                     label="Require approval for fulfilment media"
                   />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 space-y-3">
+                <div className="space-y-1">
+                  <label
+                    htmlFor="media-pending-expires"
+                    className="text-base font-medium text-gray-900"
+                  >
+                    Fulfilment media pending auto-approve (minutes)
+                  </label>
+                  <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+                    When media is waiting for moderator approval, it is auto-approved after this many minutes
+                    if not reviewed. Used for the app countdown timer.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <input
+                      id="media-pending-expires"
+                      type="number"
+                      min={1}
+                      max={10080}
+                      disabled={!isAdmin || mediaExpiresSaving}
+                      value={mediaPendingExpiresInput}
+                      onChange={(e) => setMediaPendingExpiresInput(e.target.value)}
+                      className="block w-32 rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={
+                      !isAdmin ||
+                      mediaExpiresSaving ||
+                      parseInt(mediaPendingExpiresInput, 10) === confirmedMediaPendingExpires
+                    }
+                    isLoading={mediaExpiresSaving}
+                    onClick={handleSaveMediaPendingExpires}
+                  >
+                    Save
+                  </Button>
                 </div>
               </div>
 
