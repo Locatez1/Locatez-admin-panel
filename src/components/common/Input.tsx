@@ -8,7 +8,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, onWheel, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
@@ -18,6 +18,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
+          {...props}
+          onWheel={(e) => {
+            if (props.type === "number") {
+              e.currentTarget.blur();
+            }
+            onWheel?.(e);
+          }}
           className={twMerge(
             clsx(
               "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500",
@@ -25,7 +32,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               className
             )
           )}
-          {...props}
         />
         {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>

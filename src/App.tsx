@@ -43,6 +43,21 @@ function App() {
     initFirebaseMessaging().catch((err) => {
       console.error("[FCM] Startup initialization error:", err);
     });
+
+    const handleWheel = (e: WheelEvent) => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && active.type === "number") {
+        active.blur();
+      }
+      if (e.target instanceof HTMLInputElement && e.target.type === "number") {
+        e.target.blur();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
   return (
