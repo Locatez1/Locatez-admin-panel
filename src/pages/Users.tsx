@@ -9,7 +9,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { Link } from "react-router-dom";
-import { Search, Eye, Trash2, Ban, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Eye, Trash2, Ban, CheckCircle, AlertTriangle, MapPin } from "lucide-react";
 
 export const Users: React.FC = () => {
   const { role: currentUserRole } = useAuth();
@@ -218,9 +218,19 @@ export const Users: React.FC = () => {
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <div className="flex justify-end gap-2">
-                      <Link to={`/users/${user.id}`} className="text-blue-600 hover:text-blue-900">
+                      <Link to={`/users/${user.id}`} className="text-blue-600 hover:text-blue-900" title="View">
                         <Eye className="h-5 w-5" />
                       </Link>
+                      {typeof user.profile?.latitude === "number" &&
+                        typeof user.profile?.longitude === "number" && (
+                          <Link
+                            to={`/users/${user.id}?createRequest=1`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Create request near this user"
+                          >
+                            <MapPin className="h-5 w-5" />
+                          </Link>
+                        )}
                       {isAdmin && (
                         <>
                           {user.status !== "ACTIVE" ? (

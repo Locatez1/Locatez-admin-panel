@@ -2,6 +2,22 @@ export type Role = "USER" | "MODERATOR" | "ADMIN" | "SUPERADMIN";
 
 export type UserStatus = "ACTIVE" | "BLOCKED" | "SUSPENDED";
 
+export interface UserProfile {
+  id?: string;
+  fullName?: string | null;
+  profilePhotoUrl?: string | null;
+  bio?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  addressLine1?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  pincode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -17,6 +33,7 @@ export interface User {
   isProfileComplete: boolean;
   createdAt: string;
   lastLoginAt?: string;
+  profile?: UserProfile | null;
 }
 
 export interface Category {

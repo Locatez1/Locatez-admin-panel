@@ -100,6 +100,68 @@ export const updateVideoRequestSettings = async (
   };
 };
 
+export interface AppEconomySettings {
+  welcomeBonusEnabled: boolean;
+  welcomeBonusAmount: number;
+}
+
+export const getAppEconomySettings = async (): Promise<AppEconomySettings> => {
+  const response = await apiClient.get<
+    AppEconomySettings | { success: boolean; data: AppEconomySettings }
+  >("/settings/app-economy");
+  const resData = response.data as any;
+  const data = resData?.welcomeBonusAmount != null ? resData : resData?.data;
+  return {
+    welcomeBonusEnabled: data?.welcomeBonusEnabled !== false,
+    welcomeBonusAmount:
+      typeof data?.welcomeBonusAmount === "number" ? data.welcomeBonusAmount : 250,
+  };
+};
+
+export const updateAppEconomySettings = async (input: {
+  welcomeBonusEnabled?: boolean;
+  welcomeBonusAmount?: number;
+}): Promise<AppEconomySettings> => {
+  const response = await apiClient.patch<
+    AppEconomySettings | { success: boolean; data: AppEconomySettings }
+  >("/settings/app-economy", input);
+  const resData = response.data as any;
+  const data = resData?.welcomeBonusAmount != null ? resData : resData?.data;
+  return {
+    welcomeBonusEnabled: data?.welcomeBonusEnabled !== false,
+    welcomeBonusAmount:
+      typeof data?.welcomeBonusAmount === "number"
+        ? data.welcomeBonusAmount
+        : input.welcomeBonusAmount ?? 250,
+  };
+};
+
+export const getDynamicCopyWords = async (): Promise<string[]> => {
+  const response = await apiClient.get<
+    { words: string[] } | { success: boolean; data: { words: string[] } }
+  >("/settings/dynamic-words");
+  const resData = response.data as any;
+  const words = Array.isArray(resData?.words)
+    ? resData.words
+    : Array.isArray(resData?.data?.words)
+      ? resData.data.words
+      : [];
+  return words;
+};
+
+export const updateDynamicCopyWords = async (words: string[]): Promise<string[]> => {
+  const response = await apiClient.put<
+    { words: string[] } | { success: boolean; data: { words: string[] } }
+  >("/settings/dynamic-words", { words });
+  const resData = response.data as any;
+  const next = Array.isArray(resData?.words)
+    ? resData.words
+    : Array.isArray(resData?.data?.words)
+      ? resData.data.words
+      : words;
+  return next;
+};
+
 export const getChatSettings = async (): Promise<ChatSettings> => {
   const response = await apiClient.get<ChatSettings | { success: boolean; data: ChatSettings }>("/settings/chat");
   const resData = response.data as any;

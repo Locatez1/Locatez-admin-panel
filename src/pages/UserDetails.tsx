@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { getUserById, getUserWallet, getUserTransactions, getUserActivity } from "../api/users.api";
 import { User, Wallet, WalletTransaction, AuditLog, TransactionType } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
+import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import {
   ArrowLeft,
   Wallet as WalletIcon,
@@ -15,17 +16,21 @@ import {
   RefreshCw,
   Search,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  MapPin,
+  Plus,
 } from "lucide-react";
 
 export const UserDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"profile" | "wallet" | "activity">("profile");
 
   // User State
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateRequestOpen, setIsCreateRequestOpen] = useState(false);
 
   // Wallet State
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -120,6 +125,26 @@ export const UserDetails: React.FC = () => {
   useEffect(() => {
     fetchUser();
   }, [id]);
+
+  const userLat = useMemo(() => {
+    const v = user?.profile?.latitude;
+    return typeof v === "number" && Number.isFinite(v) ? v : null;
+  }, [user]);
+  const userLng = useMemo(() => {
+    const v = user?.profile?.longitude;
+    return typeof v === "number" && Number.isFinite(v) ? v : null;
+  }, [user]);
+  const hasLocation = userLat != null && userLng != null;
+
+  useEffect(() => {
+    if (!user || loading) return;
+    if (searchParams.get("createRequest") === "1") {
+      if (hasLocation) setIsCreateRequestOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("createRequest");
+      setSearchParams(next, { replace: true });
+    }
+  }, [user, loading, hasLocation, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (activeTab === "wallet" && !wallet && !walletError) {
@@ -242,11 +267,24 @@ export const UserDetails: React.FC = () => {
       {/* TAB 1: User Profile */}
       {activeTab === "profile" && (
         <div className="overflow-hidden bg-white shadow sm:rounded-lg border border-gray-200">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <div className="px-4 py-5 sm:px-6 flex justify-between items-center gap-3 flex-wrap">
             <div>
               <h3 className="text-lg font-medium leading-6 text-gray-900">User Information</h3>
               <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and account status.</p>
             </div>
+            <Button
+              type="button"
+              size="sm"
+              disabled={!hasLocation}
+              onClick={() => setIsCreateRequestOpen(true)}
+              title={
+                hasLocation
+                  ? "Create a request near this user"
+                  : "User has no profile latitude/longitude yet"
+              }
+            >
+              <Plus className="h-4 w-4" /> Create request nearby
+            </Button>
           </div>
           <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
             <dl className="sm:divide-y sm:divide-gray-200">
@@ -279,6 +317,29 @@ export const UserDetails: React.FC = () => {
                 </dd>
               </div>
               <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> Location
+                  </span>
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  {hasLocation ? (
+                    <span>
+                      {userLat}, {userLng}
+                      {(user.profile?.city || user.profile?.addressLine1) && (
+                        <span className="block text-xs text-gray-500 mt-0.5">
+                          {[user.profile?.addressLine1, user.profile?.city, user.profile?.state]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">No latitude/longitude on profile yet</span>
+                  )}
+                </dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Created At</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                   {new Date(user.createdAt).toLocaleString()}
@@ -296,6 +357,25 @@ export const UserDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      <CreateVideoRequestModal
+        isOpen={isCreateRequestOpen}
+        onClose={() => setIsCreateRequestOpen(false)}
+        initialData={
+          hasLocation
+            ? {
+                title: user.profile?.city
+                  ? `Nearby request — ${user.profile.city}`
+                  : `Nearby request for ${user.username}`,
+                address: [user.profile?.addressLine1, user.profile?.city, user.profile?.state]
+                  .filter(Boolean)
+                  .join(", "),
+                latitude: userLat!,
+                longitude: userLng!,
+              }
+            : null
+        }
+      />
 
       {/* TAB 2: Wallet Ledger */}
       {activeTab === "wallet" && (

@@ -8,12 +8,16 @@ import {
   updateChatSettings,
   getServiceAreaSettings,
   updateServiceAreaSettings,
+  getAppEconomySettings,
+  updateAppEconomySettings,
+  getDynamicCopyWords,
+  updateDynamicCopyWords,
 } from "../api/settings.api";
 import { ServiceAreaSettings, ServiceAreaMode, ServiceArea } from "../types";
 import { Switch } from "../components/common/Switch";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
-import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2 } from "lucide-react";
+import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2, Gift, Type } from "lucide-react";
 
 export const Settings: React.FC = () => {
   const { role } = useAuth();
@@ -40,6 +44,15 @@ export const Settings: React.FC = () => {
   const [mediaRetentionHoursInput, setMediaRetentionHoursInput] = useState<string>("48");
   const [mediaRetentionSaving, setMediaRetentionSaving] = useState<boolean>(false);
   const [mediaRetentionError, setMediaRetentionError] = useState<string | null>(null);
+  const [welcomeBonusEnabled, setWelcomeBonusEnabled] = useState<boolean>(true);
+  const [confirmedWelcomeBonusAmount, setConfirmedWelcomeBonusAmount] = useState<number>(250);
+  const [welcomeBonusAmountInput, setWelcomeBonusAmountInput] = useState<string>("250");
+  const [welcomeBonusSaving, setWelcomeBonusSaving] = useState(false);
+  const [welcomeBonusError, setWelcomeBonusError] = useState<string | null>(null);
+  const [dynamicWords, setDynamicWords] = useState<string[]>([]);
+  const [newDynamicWord, setNewDynamicWord] = useState("");
+  const [dynamicWordsSaving, setDynamicWordsSaving] = useState(false);
+  const [dynamicWordsError, setDynamicWordsError] = useState<string | null>(null);
 
   // Chat Settings State
   const [confirmedChatLimit, setConfirmedChatLimit] = useState<number>(50);
@@ -71,7 +84,7 @@ export const Settings: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [vrData, chatData, saData] = await Promise.all([
+      const [vrData, chatData, saData, economyData, wordsData] = await Promise.all([
         getVideoRequestSettings(),
         getChatSettings(),
         getServiceAreaSettings().catch((saErr) => {
@@ -79,6 +92,8 @@ export const Settings: React.FC = () => {
           setServiceAreaError(saErr.response?.data?.message || saErr.message || "Failed to load service area configuration.");
           return null;
         }),
+        getAppEconomySettings().catch(() => null),
+        getDynamicCopyWords().catch(() => [] as string[]),
       ]);
 
       setRequireApproval(!!vrData.requireApprovalForAll);
@@ -96,6 +111,14 @@ export const Settings: React.FC = () => {
       setConfirmedMediaRetentionHours(vrData.mediaRetentionHours ?? 48);
       setMediaRetentionHoursInput(String(vrData.mediaRetentionHours ?? 48));
       setMediaRetentionError(null);
+
+      if (economyData) {
+        setWelcomeBonusEnabled(economyData.welcomeBonusEnabled !== false);
+        setConfirmedWelcomeBonusAmount(economyData.welcomeBonusAmount);
+        setWelcomeBonusAmountInput(String(economyData.welcomeBonusAmount));
+      }
+      setDynamicWords(Array.isArray(wordsData) ? wordsData : []);
+      setDynamicWordsError(null);
 
       const limit = typeof chatData.preAcceptanceMessageLimit === "number"
         ? chatData.preAcceptanceMessageLimit
@@ -358,6 +381,86 @@ export const Settings: React.FC = () => {
       toast.error(err.response?.data?.message || "Failed to update media retention hours.");
     } finally {
       setMediaRetentionSaving(false);
+    }
+  };
+
+  const handleToggleWelcomeBonus = async (next: boolean) => {
+    if (!isAdmin || welcomeBonusSaving) return;
+    const prev = welcomeBonusEnabled;
+    setWelcomeBonusEnabled(next);
+    setWelcomeBonusSaving(true);
+    try {
+      const updated = await updateAppEconomySettings({ welcomeBonusEnabled: next });
+      setWelcomeBonusEnabled(!!updated.welcomeBonusEnabled);
+      toast.success(next ? "Welcome bonus enabled." : "Welcome bonus disabled.");
+    } catch (err: any) {
+      setWelcomeBonusEnabled(prev);
+      toast.error(err.response?.data?.message || "Failed to update welcome bonus.");
+    } finally {
+      setWelcomeBonusSaving(false);
+    }
+  };
+
+  const handleSaveWelcomeBonusAmount = async () => {
+    if (!isAdmin || welcomeBonusSaving) return;
+    const amount = Number(welcomeBonusAmountInput);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setWelcomeBonusError("Welcome bonus amount must be greater than 0.");
+      return;
+    }
+    if (amount === confirmedWelcomeBonusAmount) return;
+    setWelcomeBonusSaving(true);
+    try {
+      const updated = await updateAppEconomySettings({ welcomeBonusAmount: amount });
+      setConfirmedWelcomeBonusAmount(updated.welcomeBonusAmount);
+      setWelcomeBonusAmountInput(String(updated.welcomeBonusAmount));
+      setWelcomeBonusError(null);
+      toast.success("Welcome bonus amount updated.");
+    } catch (err: any) {
+      setWelcomeBonusAmountInput(String(confirmedWelcomeBonusAmount));
+      toast.error(err.response?.data?.message || "Failed to update welcome bonus amount.");
+    } finally {
+      setWelcomeBonusSaving(false);
+    }
+  };
+
+  const handleAddDynamicWord = () => {
+    const word = newDynamicWord.trim();
+    if (!word) return;
+    if (word.length > 40) {
+      setDynamicWordsError("Each word must be at most 40 characters.");
+      return;
+    }
+    if (dynamicWords.some((w) => w.toLowerCase() === word.toLowerCase())) {
+      setDynamicWordsError("That word is already in the list.");
+      return;
+    }
+    setDynamicWords((prev) => [...prev, word]);
+    setNewDynamicWord("");
+    setDynamicWordsError(null);
+  };
+
+  const handleRemoveDynamicWord = (word: string) => {
+    setDynamicWords((prev) => prev.filter((w) => w !== word));
+    setDynamicWordsError(null);
+  };
+
+  const handleSaveDynamicWords = async () => {
+    if (!isAdmin || dynamicWordsSaving) return;
+    if (dynamicWords.length === 0) {
+      setDynamicWordsError("Add at least one word.");
+      return;
+    }
+    setDynamicWordsSaving(true);
+    try {
+      const saved = await updateDynamicCopyWords(dynamicWords);
+      setDynamicWords(saved);
+      setDynamicWordsError(null);
+      toast.success("Dynamic words saved.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save dynamic words.");
+    } finally {
+      setDynamicWordsSaving(false);
     }
   };
 
@@ -978,6 +1081,133 @@ export const Settings: React.FC = () => {
 
                 {mediaRetentionError && (
                   <p className="text-xs text-red-600 font-medium">{mediaRetentionError}</p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-medium text-gray-900">Welcome bonus</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Credit new USER accounts on registration (password, OTP, Firebase, or admin create).
+                </p>
+                <div className="flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Enable welcome bonus</p>
+                    <p className="text-xs text-gray-500">When off, new users get a wallet with ₹0 credit.</p>
+                  </div>
+                  <Switch
+                    checked={welcomeBonusEnabled}
+                    onChange={handleToggleWelcomeBonus}
+                    disabled={!isAdmin || welcomeBonusSaving}
+                  />
+                </div>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label htmlFor="welcome-bonus-amount" className="block text-sm font-medium text-gray-900 mb-1">
+                      Bonus amount (INR)
+                    </label>
+                    <input
+                      id="welcome-bonus-amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      disabled={!isAdmin || welcomeBonusSaving || !welcomeBonusEnabled}
+                      value={welcomeBonusAmountInput}
+                      onChange={(e) => {
+                        setWelcomeBonusAmountInput(e.target.value);
+                        setWelcomeBonusError(null);
+                      }}
+                      className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={
+                      !isAdmin ||
+                      welcomeBonusSaving ||
+                      !welcomeBonusEnabled ||
+                      Number(welcomeBonusAmountInput) === confirmedWelcomeBonusAmount
+                    }
+                    isLoading={welcomeBonusSaving}
+                    onClick={handleSaveWelcomeBonusAmount}
+                  >
+                    Save amount
+                  </Button>
+                </div>
+                {welcomeBonusError && (
+                  <p className="text-xs text-red-600 font-medium">{welcomeBonusError}</p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Type className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-medium text-gray-900">Dynamic copy words</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Words used for rotating UI copy (e.g. explore, watch, see). Clients call{" "}
+                  <code className="text-xs bg-gray-100 px-1 rounded">GET /settings/dynamic-words</code>.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {dynamicWords.map((word) => (
+                    <span
+                      key={word}
+                      className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-800"
+                    >
+                      {word}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="text-gray-400 hover:text-red-600"
+                          onClick={() => handleRemoveDynamicWord(word)}
+                          disabled={dynamicWordsSaving}
+                          aria-label={`Remove ${word}`}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                  {dynamicWords.length === 0 && (
+                    <span className="text-xs text-gray-400">No words yet.</span>
+                  )}
+                </div>
+                {isAdmin && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={40}
+                      placeholder="Add a word"
+                      value={newDynamicWord}
+                      onChange={(e) => setNewDynamicWord(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddDynamicWord();
+                        }
+                      }}
+                      className="block w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      disabled={dynamicWordsSaving}
+                    />
+                    <Button type="button" size="sm" variant="ghost" onClick={handleAddDynamicWord} disabled={dynamicWordsSaving}>
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      isLoading={dynamicWordsSaving}
+                      disabled={dynamicWordsSaving || dynamicWords.length === 0}
+                      onClick={handleSaveDynamicWords}
+                    >
+                      Save words
+                    </Button>
+                  </div>
+                )}
+                {dynamicWordsError && (
+                  <p className="text-xs text-red-600 font-medium">{dynamicWordsError}</p>
                 )}
               </div>
             </div>
