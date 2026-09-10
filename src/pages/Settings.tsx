@@ -34,9 +34,11 @@ export const Settings: React.FC = () => {
   const [confirmedMinRewardVideo, setConfirmedMinRewardVideo] = useState<number>(50);
   const [confirmedMinRewardImage, setConfirmedMinRewardImage] = useState<number>(20);
   const [confirmedNearbyRadius, setConfirmedNearbyRadius] = useState<number>(5000);
+  const [confirmedMaxConcurrentAccepted, setConfirmedMaxConcurrentAccepted] = useState<number>(3);
   const [minRewardVideoInput, setMinRewardVideoInput] = useState<string>("50");
   const [minRewardImageInput, setMinRewardImageInput] = useState<string>("20");
   const [nearbyRadiusInput, setNearbyRadiusInput] = useState<string>("5000");
+  const [maxConcurrentAcceptedInput, setMaxConcurrentAcceptedInput] = useState<string>("3");
   const [economyValidationError, setEconomyValidationError] = useState<string | null>(null);
   const [economySaving, setEconomySaving] = useState<boolean>(false);
   const [mediaCleanupEnabled, setMediaCleanupEnabled] = useState<boolean>(true);
@@ -103,9 +105,11 @@ export const Settings: React.FC = () => {
       setConfirmedMinRewardVideo(vrData.minRewardVideo);
       setConfirmedMinRewardImage(vrData.minRewardImage);
       setConfirmedNearbyRadius(vrData.nearbyRadiusMeters);
+      setConfirmedMaxConcurrentAccepted(vrData.maxConcurrentAcceptedRequests ?? 3);
       setMinRewardVideoInput(String(vrData.minRewardVideo));
       setMinRewardImageInput(String(vrData.minRewardImage));
       setNearbyRadiusInput(String(vrData.nearbyRadiusMeters));
+      setMaxConcurrentAcceptedInput(String(vrData.maxConcurrentAcceptedRequests ?? 3));
       setEconomyValidationError(null);
       setMediaCleanupEnabled(vrData.mediaCleanupEnabled !== false);
       setConfirmedMediaRetentionHours(vrData.mediaRetentionHours ?? 48);
@@ -243,26 +247,43 @@ export const Settings: React.FC = () => {
     return null;
   };
 
+  const validateMaxConcurrentAccepted = (value: string): string | null => {
+    if (!value || value.trim() === "") return "Max concurrent accepted requests is required.";
+    const num = Number(value);
+    if (isNaN(num)) return "Max concurrent accepted requests must be a valid number.";
+    if (!Number.isInteger(num) || value.includes(".")) {
+      return "Max concurrent accepted requests must be a whole number.";
+    }
+    if (num < 1 || num > 100) {
+      return "Max concurrent accepted requests must be between 1 and 100.";
+    }
+    return null;
+  };
+
   const validateEconomyInputs = (): string | null =>
     validatePositiveMoney(minRewardVideoInput, "Minimum video reward") ||
     validatePositiveMoney(minRewardImageInput, "Minimum image reward") ||
-    validateNearbyRadius(nearbyRadiusInput);
+    validateNearbyRadius(nearbyRadiusInput) ||
+    validateMaxConcurrentAccepted(maxConcurrentAcceptedInput);
 
   const handleEconomyFieldChange = (
-    field: "video" | "image" | "radius",
+    field: "video" | "image" | "radius" | "maxConcurrent",
     value: string
   ) => {
     if (field === "video") setMinRewardVideoInput(value);
     else if (field === "image") setMinRewardImageInput(value);
-    else setNearbyRadiusInput(value);
+    else if (field === "radius") setNearbyRadiusInput(value);
+    else setMaxConcurrentAcceptedInput(value);
 
     const nextVideo = field === "video" ? value : minRewardVideoInput;
     const nextImage = field === "image" ? value : minRewardImageInput;
     const nextRadius = field === "radius" ? value : nearbyRadiusInput;
+    const nextMaxConcurrent = field === "maxConcurrent" ? value : maxConcurrentAcceptedInput;
     setEconomyValidationError(
       validatePositiveMoney(nextVideo, "Minimum video reward") ||
         validatePositiveMoney(nextImage, "Minimum image reward") ||
-        validateNearbyRadius(nextRadius)
+        validateNearbyRadius(nextRadius) ||
+        validateMaxConcurrentAccepted(nextMaxConcurrent)
     );
   };
 
@@ -279,11 +300,13 @@ export const Settings: React.FC = () => {
     const minRewardVideo = Math.round(Number(minRewardVideoInput) * 100) / 100;
     const minRewardImage = Math.round(Number(minRewardImageInput) * 100) / 100;
     const nearbyRadiusMeters = parseInt(nearbyRadiusInput, 10);
+    const maxConcurrentAcceptedRequests = parseInt(maxConcurrentAcceptedInput, 10);
 
     const unchanged =
       minRewardVideo === confirmedMinRewardVideo &&
       minRewardImage === confirmedMinRewardImage &&
-      nearbyRadiusMeters === confirmedNearbyRadius;
+      nearbyRadiusMeters === confirmedNearbyRadius &&
+      maxConcurrentAcceptedRequests === confirmedMaxConcurrentAccepted;
     if (unchanged) return;
 
     setEconomySaving(true);
@@ -292,19 +315,23 @@ export const Settings: React.FC = () => {
         minRewardVideo,
         minRewardImage,
         nearbyRadiusMeters,
+        maxConcurrentAcceptedRequests,
       });
       setConfirmedMinRewardVideo(updated.minRewardVideo);
       setConfirmedMinRewardImage(updated.minRewardImage);
       setConfirmedNearbyRadius(updated.nearbyRadiusMeters);
+      setConfirmedMaxConcurrentAccepted(updated.maxConcurrentAcceptedRequests);
       setMinRewardVideoInput(String(updated.minRewardVideo));
       setMinRewardImageInput(String(updated.minRewardImage));
       setNearbyRadiusInput(String(updated.nearbyRadiusMeters));
+      setMaxConcurrentAcceptedInput(String(updated.maxConcurrentAcceptedRequests));
       setEconomyValidationError(null);
       toast.success("Request economy settings updated successfully.");
     } catch (err: any) {
       setMinRewardVideoInput(String(confirmedMinRewardVideo));
       setMinRewardImageInput(String(confirmedMinRewardImage));
       setNearbyRadiusInput(String(confirmedNearbyRadius));
+      setMaxConcurrentAcceptedInput(String(confirmedMaxConcurrentAccepted));
       setEconomyValidationError(null);
       toast.error(err.response?.data?.message || "Failed to update request economy settings.");
     } finally {
@@ -318,7 +345,8 @@ export const Settings: React.FC = () => {
     !!economyValidationError ||
     (Number(minRewardVideoInput) === confirmedMinRewardVideo &&
       Number(minRewardImageInput) === confirmedMinRewardImage &&
-      parseInt(nearbyRadiusInput, 10) === confirmedNearbyRadius);
+      parseInt(nearbyRadiusInput, 10) === confirmedNearbyRadius &&
+      parseInt(maxConcurrentAcceptedInput, 10) === confirmedMaxConcurrentAccepted);
 
   const validateMediaRetentionHours = (value: string): string | null => {
     if (!value || value.trim() === "") return "Retention hours is required.";
@@ -939,10 +967,10 @@ export const Settings: React.FC = () => {
                     <h3 className="text-base font-medium text-gray-900">Minimum rewards & nearby radius</h3>
                   </div>
                   <p className="text-sm text-gray-600">
-                    These values apply when users create video/image requests and when nearby discovery or push notifications use the default radius.
+                    These values apply when users create video/image requests, when nearby discovery uses the default radius, and when capping how many accepted/ongoing requests a fulfiller can hold at once.
                   </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label htmlFor="min-reward-video" className="block text-sm font-medium text-gray-900 mb-1">
                         Min video reward (INR)
@@ -990,6 +1018,25 @@ export const Settings: React.FC = () => {
                         onChange={(e) => handleEconomyFieldChange("radius", e.target.value)}
                         className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="max-concurrent-accepted" className="block text-sm font-medium text-gray-900 mb-1">
+                        Max concurrent accepts
+                      </label>
+                      <input
+                        id="max-concurrent-accepted"
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        disabled={!isAdmin || economySaving}
+                        value={maxConcurrentAcceptedInput}
+                        onChange={(e) => handleEconomyFieldChange("maxConcurrent", e.target.value)}
+                        className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Limit on ACCEPTED + ongoing requests per fulfiller.
+                      </p>
                     </div>
                   </div>
 

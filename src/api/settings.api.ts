@@ -8,6 +8,7 @@ export interface VideoRequestSettings {
   minRewardVideo: number;
   minRewardImage: number;
   nearbyRadiusMeters: number;
+  maxConcurrentAcceptedRequests: number;
   mediaCleanupEnabled: boolean;
   mediaRetentionHours: number;
 }
@@ -19,6 +20,7 @@ export type UpdateVideoRequestSettingsInput = {
   minRewardVideo?: number;
   minRewardImage?: number;
   nearbyRadiusMeters?: number;
+  maxConcurrentAcceptedRequests?: number;
   mediaCleanupEnabled?: boolean;
   mediaRetentionHours?: number;
 };
@@ -34,6 +36,7 @@ const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   minRewardVideo: 50,
   minRewardImage: 20,
   nearbyRadiusMeters: 5000,
+  maxConcurrentAcceptedRequests: 3,
   mediaCleanupEnabled: true,
   mediaRetentionHours: 48,
 };
@@ -65,6 +68,10 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
       typeof candidate.nearbyRadiusMeters === "number"
         ? candidate.nearbyRadiusMeters
         : DEFAULT_VR_SETTINGS.nearbyRadiusMeters,
+    maxConcurrentAcceptedRequests:
+      typeof candidate.maxConcurrentAcceptedRequests === "number"
+        ? candidate.maxConcurrentAcceptedRequests
+        : DEFAULT_VR_SETTINGS.maxConcurrentAcceptedRequests,
     mediaCleanupEnabled:
       typeof candidate.mediaCleanupEnabled === "boolean"
         ? candidate.mediaCleanupEnabled
