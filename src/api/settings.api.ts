@@ -8,6 +8,8 @@ export interface VideoRequestSettings {
   minRewardVideo: number;
   minRewardImage: number;
   nearbyRadiusMeters: number;
+  mediaCleanupEnabled: boolean;
+  mediaRetentionHours: number;
 }
 
 export type UpdateVideoRequestSettingsInput = {
@@ -17,6 +19,8 @@ export type UpdateVideoRequestSettingsInput = {
   minRewardVideo?: number;
   minRewardImage?: number;
   nearbyRadiusMeters?: number;
+  mediaCleanupEnabled?: boolean;
+  mediaRetentionHours?: number;
 };
 
 export interface ChatSettings {
@@ -30,6 +34,8 @@ const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   minRewardVideo: 50,
   minRewardImage: 20,
   nearbyRadiusMeters: 5000,
+  mediaCleanupEnabled: true,
+  mediaRetentionHours: 48,
 };
 
 const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null => {
@@ -59,6 +65,14 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
       typeof candidate.nearbyRadiusMeters === "number"
         ? candidate.nearbyRadiusMeters
         : DEFAULT_VR_SETTINGS.nearbyRadiusMeters,
+    mediaCleanupEnabled:
+      typeof candidate.mediaCleanupEnabled === "boolean"
+        ? candidate.mediaCleanupEnabled
+        : DEFAULT_VR_SETTINGS.mediaCleanupEnabled,
+    mediaRetentionHours:
+      typeof candidate.mediaRetentionHours === "number"
+        ? candidate.mediaRetentionHours
+        : DEFAULT_VR_SETTINGS.mediaRetentionHours,
   };
 };
 

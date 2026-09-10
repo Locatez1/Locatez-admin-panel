@@ -13,7 +13,7 @@ import { ServiceAreaSettings, ServiceAreaMode, ServiceArea } from "../types";
 import { Switch } from "../components/common/Switch";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
-import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar } from "lucide-react";
+import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2 } from "lucide-react";
 
 export const Settings: React.FC = () => {
   const { role } = useAuth();
@@ -35,6 +35,11 @@ export const Settings: React.FC = () => {
   const [nearbyRadiusInput, setNearbyRadiusInput] = useState<string>("5000");
   const [economyValidationError, setEconomyValidationError] = useState<string | null>(null);
   const [economySaving, setEconomySaving] = useState<boolean>(false);
+  const [mediaCleanupEnabled, setMediaCleanupEnabled] = useState<boolean>(true);
+  const [confirmedMediaRetentionHours, setConfirmedMediaRetentionHours] = useState<number>(48);
+  const [mediaRetentionHoursInput, setMediaRetentionHoursInput] = useState<string>("48");
+  const [mediaRetentionSaving, setMediaRetentionSaving] = useState<boolean>(false);
+  const [mediaRetentionError, setMediaRetentionError] = useState<string | null>(null);
 
   // Chat Settings State
   const [confirmedChatLimit, setConfirmedChatLimit] = useState<number>(50);
@@ -87,6 +92,10 @@ export const Settings: React.FC = () => {
       setMinRewardImageInput(String(vrData.minRewardImage));
       setNearbyRadiusInput(String(vrData.nearbyRadiusMeters));
       setEconomyValidationError(null);
+      setMediaCleanupEnabled(vrData.mediaCleanupEnabled !== false);
+      setConfirmedMediaRetentionHours(vrData.mediaRetentionHours ?? 48);
+      setMediaRetentionHoursInput(String(vrData.mediaRetentionHours ?? 48));
+      setMediaRetentionError(null);
 
       const limit = typeof chatData.preAcceptanceMessageLimit === "number"
         ? chatData.preAcceptanceMessageLimit
@@ -287,6 +296,70 @@ export const Settings: React.FC = () => {
     (Number(minRewardVideoInput) === confirmedMinRewardVideo &&
       Number(minRewardImageInput) === confirmedMinRewardImage &&
       parseInt(nearbyRadiusInput, 10) === confirmedNearbyRadius);
+
+  const validateMediaRetentionHours = (value: string): string | null => {
+    if (!value || value.trim() === "") return "Retention hours is required.";
+    const num = Number(value);
+    if (!Number.isInteger(num) || value.includes(".")) {
+      return "Retention hours must be a whole number.";
+    }
+    if (num < 1 || num > 8760) {
+      return "Retention hours must be between 1 and 8760.";
+    }
+    return null;
+  };
+
+  const handleMediaRetentionInputChange = (value: string) => {
+    setMediaRetentionHoursInput(value);
+    setMediaRetentionError(validateMediaRetentionHours(value));
+  };
+
+  const handleToggleMediaCleanup = async (next: boolean) => {
+    if (!isAdmin || mediaRetentionSaving) return;
+    const prev = mediaCleanupEnabled;
+    setMediaCleanupEnabled(next);
+    setMediaRetentionSaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({ mediaCleanupEnabled: next });
+      setMediaCleanupEnabled(!!updated.mediaCleanupEnabled);
+      toast.success(
+        next
+          ? "Nightly media cleanup enabled (12:00 AM IST)."
+          : "Nightly media cleanup disabled."
+      );
+    } catch (err: any) {
+      setMediaCleanupEnabled(prev);
+      toast.error(err.response?.data?.message || "Failed to update media cleanup setting.");
+    } finally {
+      setMediaRetentionSaving(false);
+    }
+  };
+
+  const handleSaveMediaRetentionHours = async () => {
+    if (!isAdmin || mediaRetentionSaving) return;
+    const err = validateMediaRetentionHours(mediaRetentionHoursInput);
+    if (err) {
+      setMediaRetentionError(err);
+      return;
+    }
+    const hours = parseInt(mediaRetentionHoursInput, 10);
+    if (hours === confirmedMediaRetentionHours) return;
+
+    setMediaRetentionSaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({ mediaRetentionHours: hours });
+      setConfirmedMediaRetentionHours(updated.mediaRetentionHours);
+      setMediaRetentionHoursInput(String(updated.mediaRetentionHours));
+      setMediaRetentionError(null);
+      toast.success("Media retention hours updated.");
+    } catch (err: any) {
+      setMediaRetentionHoursInput(String(confirmedMediaRetentionHours));
+      setMediaRetentionError(null);
+      toast.error(err.response?.data?.message || "Failed to update media retention hours.");
+    } finally {
+      setMediaRetentionSaving(false);
+    }
+  };
 
   // Chat Settings Input Validation & Handlers
   const validateChatInput = (value: string): string | null => {
@@ -838,6 +911,74 @@ export const Settings: React.FC = () => {
                     </Button>
                   </div>
                 </form>
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Trash2 className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-medium text-gray-900">S3 media retention</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Every day at <strong>12:00 AM IST</strong>, delete aged media for{" "}
+                  <strong>request fulfilment</strong> (and related chat delivery) and{" "}
+                  <strong>marketplace</strong> listings. Ideas and popular places are never deleted.
+                </p>
+
+                <div className="flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Enable nightly cleanup</p>
+                    <p className="text-xs text-gray-500">Admin-controlled on/off for the IST midnight job.</p>
+                  </div>
+                  <Switch
+                    checked={mediaCleanupEnabled}
+                    onChange={handleToggleMediaCleanup}
+                    disabled={!isAdmin || mediaRetentionSaving}
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label
+                      htmlFor="media-retention-hours"
+                      className="block text-sm font-medium text-gray-900 mb-1"
+                    >
+                      Retention hours
+                    </label>
+                    <input
+                      id="media-retention-hours"
+                      type="number"
+                      min="1"
+                      max="8760"
+                      step="1"
+                      disabled={!isAdmin || mediaRetentionSaving || !mediaCleanupEnabled}
+                      value={mediaRetentionHoursInput}
+                      onChange={(e) => handleMediaRetentionInputChange(e.target.value)}
+                      className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Media older than this many hours is eligible (default 48).
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={
+                      !isAdmin ||
+                      mediaRetentionSaving ||
+                      !mediaCleanupEnabled ||
+                      !!mediaRetentionError ||
+                      parseInt(mediaRetentionHoursInput, 10) === confirmedMediaRetentionHours
+                    }
+                    isLoading={mediaRetentionSaving}
+                    onClick={handleSaveMediaRetentionHours}
+                  >
+                    Save retention
+                  </Button>
+                </div>
+
+                {mediaRetentionError && (
+                  <p className="text-xs text-red-600 font-medium">{mediaRetentionError}</p>
+                )}
               </div>
             </div>
           </div>
