@@ -24,8 +24,17 @@ export interface Category {
   name: string;
   slug: string;
   isActive: boolean;
+  videoRequestCount?: number;
+  marketplaceStreamCount?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ModeratedByUser {
+  id: string;
+  username: string;
+  fullName?: string | null;
+  name?: string;
 }
 
 export interface CategorySuggestion {
@@ -123,6 +132,8 @@ export interface VideoRequest {
   restrictedReason?: string;
   restrictionReason?: string;
   rejectionReason?: string;
+  reviewedAt?: string | null;
+  reviewedBy?: ModeratedByUser | null;
   customLocation?: {
     address?: string;
     latitude?: number;
@@ -143,6 +154,9 @@ export interface VideoRequest {
       id: string;
       status: "PENDING" | "APPROVED" | "REJECTED";
       rejectionReason?: string | null;
+      reviewedAt?: string | null;
+      reviewedById?: string | null;
+      reviewedBy?: ModeratedByUser | null;
       canReview?: boolean;
       pendingExpiresAt?: string | null;
       pendingExpiresAtIst?: string | null;
@@ -270,6 +284,8 @@ export interface MarketplaceStream {
   purchaseCount?: number;
   createdAt: string;
   rejectionReason?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: ModeratedByUser | null;
   isRestrictedArea?: boolean;
   restrictedAreaType?: string | null;
 }

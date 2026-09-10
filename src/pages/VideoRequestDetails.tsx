@@ -532,6 +532,28 @@ export const VideoRequestDetails: React.FC = () => {
           <div className="bg-red-50 border-y border-red-200 p-4">
             <h3 className="text-sm font-medium text-red-800">Rejection Reason</h3>
             <p className="mt-1 text-sm text-red-700">{request.rejectionReason}</p>
+            {request.reviewedBy && (
+              <p className="mt-2 text-xs text-red-600">
+                Rejected by{" "}
+                <strong>{request.reviewedBy.name || request.reviewedBy.username}</strong>
+                {request.reviewedAt
+                  ? ` · ${new Date(request.reviewedAt).toLocaleString()}`
+                  : ""}
+              </p>
+            )}
+          </div>
+        )}
+
+        {(request.status === "OPEN" || request.status === "ACCEPTED" || request.status === "ONGOING" || request.status === "COMPLETED") &&
+          request.reviewedBy && (
+          <div className="bg-emerald-50 border-y border-emerald-200 p-3 px-4 sm:px-6">
+            <p className="text-xs text-emerald-800">
+              Approved by{" "}
+              <strong>{request.reviewedBy.name || request.reviewedBy.username}</strong>
+              {request.reviewedAt
+                ? ` · ${new Date(request.reviewedAt).toLocaleString()}`
+                : ""}
+            </p>
           </div>
         )}
 
@@ -741,6 +763,44 @@ export const VideoRequestDetails: React.FC = () => {
               {fulfilmentLatest.rejectionReason && (
                 <p className="mt-1 text-red-700">Reason: {fulfilmentLatest.rejectionReason}</p>
               )}
+              {fulfilmentLatest.reviewedBy && (
+                <p className="mt-2 text-xs text-red-600">
+                  Rejected by{" "}
+                  <strong>
+                    {fulfilmentLatest.reviewedBy.name || fulfilmentLatest.reviewedBy.username}
+                  </strong>
+                  {fulfilmentLatest.reviewedAt
+                    ? ` · ${new Date(fulfilmentLatest.reviewedAt).toLocaleString()}`
+                    : ""}
+                </p>
+              )}
+            </div>
+          )}
+
+          {fulfilmentLatest?.status === "APPROVED" && fulfilmentLatest.reviewedBy && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-md p-3 text-sm text-emerald-800">
+              <p className="text-xs">
+                Media approved by{" "}
+                <strong>
+                  {fulfilmentLatest.reviewedBy.name || fulfilmentLatest.reviewedBy.username}
+                </strong>
+                {fulfilmentLatest.reviewedAt
+                  ? ` · ${new Date(fulfilmentLatest.reviewedAt).toLocaleString()}`
+                  : " · auto-approved"}
+              </p>
+            </div>
+          )}
+
+          {fulfilmentLatest?.status === "APPROVED" &&
+            !fulfilmentLatest.reviewedBy &&
+            fulfilmentLatest.reviewedAt && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-md p-3 text-sm text-emerald-800">
+              <p className="text-xs">
+                Media auto-approved
+                {fulfilmentLatest.reviewedAt
+                  ? ` · ${new Date(fulfilmentLatest.reviewedAt).toLocaleString()}`
+                  : ""}
+              </p>
             </div>
           )}
 

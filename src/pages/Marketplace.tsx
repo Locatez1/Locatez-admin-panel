@@ -1050,6 +1050,31 @@ export const Marketplace: React.FC = () => {
               <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded text-xs">
                 <p className="font-semibold">Listing Rejected / Cancelled</p>
                 <p className="mt-0.5">Reason: {selectedStream.rejectionReason}</p>
+                {selectedStream.reviewedBy && (
+                  <p className="mt-1">
+                    By{" "}
+                    <strong>
+                      {selectedStream.reviewedBy.name || selectedStream.reviewedBy.username}
+                    </strong>
+                    {selectedStream.reviewedAt
+                      ? ` · ${new Date(selectedStream.reviewedAt).toLocaleString()}`
+                      : ""}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {(selectedStream.status === "PUBLISHED" ||
+              (selectedStream.status as string) === "LIVE") &&
+              selectedStream.reviewedBy && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded text-xs">
+                Approved by{" "}
+                <strong>
+                  {selectedStream.reviewedBy.name || selectedStream.reviewedBy.username}
+                </strong>
+                {selectedStream.reviewedAt
+                  ? ` · ${new Date(selectedStream.reviewedAt).toLocaleString()}`
+                  : ""}
               </div>
             )}
 
