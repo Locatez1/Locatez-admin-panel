@@ -2,8 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "../common/Modal";
 import { Input } from "../common/Input";
 import { Button } from "../common/Button";
+import { MapboxLocationPicker } from "../common/MapboxLocationPicker";
 import { createVideoRequest } from "../../api/videoRequests.api";
-import { MapPin } from "lucide-react";
+import { getRecommendedCategories } from "../../api/categories.api";
+import { getVideoRequestSettings } from "../../api/settings.api";
+import { useDebounce } from "../../hooks/useDebounce";
+import { Category } from "../../types";
+import { Loader2, MapPin, Tag } from "lucide-react";
+
+type RequestType = "VIDEO" | "IMAGE";
+
+const DESCRIPTION_MIN_CHARS = 100;
+const CATEGORY_DEBOUNCE_MS = 600;
 
 interface InitialVideoRequestData {
   title?: string;
@@ -27,50 +37,158 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   onSuccess,
   initialData,
 }) => {
+  const [requestType, setRequestType] = useState<RequestType>("VIDEO");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState<number | "">("");
   const [longitude, setLongitude] = useState<number | "">("");
   const [durationSeconds, setDurationSeconds] = useState<number | "">(60);
+  const [requestedImageCount, setRequestedImageCount] = useState<number | "">(3);
   const [rewardAmount, setRewardAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
 
+  const [minRewardVideo, setMinRewardVideo] = useState<number | null>(null);
+  const [minRewardImage, setMinRewardImage] = useState<number | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
+  const [suggestedCategory, setSuggestedCategory] = useState<Category | null>(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+
+  const debouncedDescription = useDebounce(description.trim(), CATEGORY_DEBOUNCE_MS);
+  const descriptionLength = description.trim().length;
+  const descriptionReady = descriptionLength >= DESCRIPTION_MIN_CHARS;
+  const activeMinReward =
+    requestType === "IMAGE" ? minRewardImage : minRewardVideo;
+
   useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        setTitle(initialData.title || "");
-        setDescription(initialData.description || "");
-        setAddress(initialData.address || "");
-        setLatitude(typeof initialData.latitude === "number" ? initialData.latitude : "");
-        setLongitude(typeof initialData.longitude === "number" ? initialData.longitude : "");
-        if (typeof initialData.rewardAmount === "number") {
-          setRewardAmount(initialData.rewardAmount);
-        }
-      } else {
-        setTitle("");
-        setDescription("");
-        setAddress("");
-        setLatitude("");
-        setLongitude("");
-        setRewardAmount("");
-      }
-      setDurationSeconds(60);
+    if (!isOpen) return;
+
+    setRequestType("VIDEO");
+    setDurationSeconds(60);
+    setRequestedImageCount(3);
+    setSuggestedCategory(null);
+    setCategoryError(null);
+    setCategoryLoading(false);
+
+    if (initialData) {
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+      setAddress(initialData.address || "");
+      setLatitude(typeof initialData.latitude === "number" ? initialData.latitude : "");
+      setLongitude(typeof initialData.longitude === "number" ? initialData.longitude : "");
+      setRewardAmount(typeof initialData.rewardAmount === "number" ? initialData.rewardAmount : "");
+    } else {
+      setTitle("");
+      setDescription("");
+      setAddress("");
+      setLatitude("");
+      setLongitude("");
+      setRewardAmount("");
     }
+
+    let cancelled = false;
+    setSettingsLoading(true);
+    getVideoRequestSettings()
+      .then((settings) => {
+        if (cancelled) return;
+        setMinRewardVideo(settings.minRewardVideo);
+        setMinRewardImage(settings.minRewardImage);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMinRewardVideo(null);
+        setMinRewardImage(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSettingsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, initialData]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (debouncedDescription.length < DESCRIPTION_MIN_CHARS) {
+      setSuggestedCategory(null);
+      setCategoryError(null);
+      setCategoryLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCategoryLoading(true);
+    setCategoryError(null);
+
+    getRecommendedCategories(debouncedDescription)
+      .then((categories) => {
+        if (cancelled) return;
+        const top = categories[0] ?? null;
+        setSuggestedCategory(top);
+        if (!top) {
+          setCategoryError("No category recommendation returned. Try refining the description.");
+        }
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        setSuggestedCategory(null);
+        setCategoryError(
+          err?.response?.data?.message || err?.message || "Failed to fetch category recommendation"
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setCategoryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedDescription, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || typeof latitude !== "number" || typeof longitude !== "number") {
-      alert("Please fill in title and a valid location (latitude and longitude).");
+      alert("Please fill in title and pick a location on the map.");
       return;
     }
-    if (typeof durationSeconds !== "number" || durationSeconds < 1) {
-      alert("Duration must be at least 1 second.");
+    if (!descriptionReady) {
+      alert(`Description must be at least ${DESCRIPTION_MIN_CHARS} characters.`);
+      return;
+    }
+    if (categoryLoading) {
+      alert("Please wait for the category recommendation to finish.");
+      return;
+    }
+    if (!suggestedCategory?.id) {
+      alert("A category is required. Wait for the recommendation or refine the description.");
       return;
     }
     if (typeof rewardAmount !== "number" || rewardAmount <= 0) {
       alert("Reward amount must be greater than 0.");
+      return;
+    }
+    if (typeof activeMinReward === "number" && rewardAmount < activeMinReward) {
+      alert(
+        `Reward amount must be at least ₹${activeMinReward} for ${requestType.toLowerCase()} requests.`
+      );
+      return;
+    }
+
+    if (requestType === "VIDEO") {
+      if (typeof durationSeconds !== "number" || durationSeconds < 1) {
+        alert("Duration must be at least 1 second.");
+        return;
+      }
+    } else if (
+      typeof requestedImageCount !== "number" ||
+      requestedImageCount < 1 ||
+      requestedImageCount > 10
+    ) {
+      alert("Image count must be between 1 and 10.");
       return;
     }
 
@@ -78,8 +196,16 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     try {
       await createVideoRequest({
         title: title.trim(),
-        description: description.trim() || undefined,
-        durationSeconds,
+        description: description.trim(),
+        categoryId: suggestedCategory.id,
+        requestType,
+        ...(requestType === "IMAGE"
+          ? {
+              requestedImageCount: requestedImageCount as number,
+              // Backend still requires durationSeconds for IMAGE creates.
+              durationSeconds: 60,
+            }
+          : { durationSeconds: durationSeconds as number }),
         rewardAmount,
         customLocation: {
           address: address.trim() || undefined,
@@ -93,15 +219,24 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     } catch (err: any) {
       const errCode = err.response?.data?.code || err.response?.data?.errorCode;
       const errMsg = err.response?.data?.message || err.message || "";
+      const dataCode = err.response?.data?.data?.code;
 
-      if (errCode === "SERVICE_AREA_RESTRICTED" || errMsg.includes("SERVICE_AREA_RESTRICTED")) {
-        const availableAreas = err.response?.data?.availableAreas || err.response?.data?.data?.availableAreas;
-        const areasListText = Array.isArray(availableAreas) && availableAreas.length > 0
-          ? ` Available areas: ${availableAreas.map((a: any) => (typeof a === "string" ? a : a.name)).join(", ")}.`
-          : "";
+      if (
+        errCode === "SERVICE_AREA_RESTRICTED" ||
+        dataCode === "SERVICE_AREA_RESTRICTED" ||
+        errMsg.includes("SERVICE_AREA_RESTRICTED")
+      ) {
+        const availableAreas =
+          err.response?.data?.availableAreas || err.response?.data?.data?.availableAreas;
+        const areasListText =
+          Array.isArray(availableAreas) && availableAreas.length > 0
+            ? ` Available areas: ${availableAreas
+                .map((a: any) => (typeof a === "string" ? a : a.name))
+                .join(", ")}.`
+            : "";
         alert(`Locatez is currently available only in selected service areas.${areasListText}`);
       } else {
-        alert(errMsg || "Failed to create video request");
+        alert(errMsg || "Failed to create request");
       }
     } finally {
       setLoading(false);
@@ -109,7 +244,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create Video Request">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create Request">
       <form onSubmit={handleSubmit} className="space-y-4">
         {initialData?.address && (
           <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800 flex items-center gap-2">
@@ -120,11 +255,45 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           </div>
         )}
 
+        <div>
+          <span className="block text-sm font-medium text-gray-700 mb-2">Request type</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => setRequestType("VIDEO")}
+              className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                requestType === "VIDEO"
+                  ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Video
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => setRequestType("IMAGE")}
+              className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                requestType === "IMAGE"
+                  ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Image
+            </button>
+          </div>
+        </div>
+
         <Input
           id="req-title"
           type="text"
           label="Request Title"
-          placeholder="e.g. Live crowd update at Marine Drive"
+          placeholder={
+            requestType === "IMAGE"
+              ? "e.g. Storefront photos at Marine Drive"
+              : "e.g. Live crowd update at Marine Drive"
+          }
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -132,86 +301,157 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
         />
 
         <div>
-          <label htmlFor="req-desc" className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label htmlFor="req-desc" className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <span
+              className={`text-xs ${
+                descriptionReady ? "text-gray-500" : "text-amber-600"
+              }`}
+            >
+              {descriptionLength}/{DESCRIPTION_MIN_CHARS} min
+            </span>
+          </div>
           <textarea
             id="req-desc"
-            rows={3}
+            rows={4}
+            required
+            minLength={DESCRIPTION_MIN_CHARS}
             className="block w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            placeholder="Describe the video coverage required..."
+            placeholder={
+              requestType === "IMAGE"
+                ? "Describe the photos required in detail (min 100 characters)..."
+                : "Describe the video coverage required in detail (min 100 characters)..."
+            }
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={loading}
           />
+          {!descriptionReady && (
+            <p className="mt-1 text-xs text-amber-600">
+              Add at least {DESCRIPTION_MIN_CHARS - descriptionLength} more character
+              {DESCRIPTION_MIN_CHARS - descriptionLength === 1 ? "" : "s"} before category
+              recommendation runs.
+            </p>
+          )}
         </div>
 
-        <Input
-          id="req-address"
-          type="text"
-          label="Location / Address"
-          placeholder="e.g. Marine Drive, Mumbai, Maharashtra"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          disabled={loading}
-        />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
-            id="req-lat"
-            type="number"
-            step="any"
-            label="Latitude"
-            placeholder="18.9432"
-            required
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : "")}
-            disabled={loading}
-          />
-          <Input
-            id="req-lng"
-            type="number"
-            step="any"
-            label="Longitude"
-            placeholder="72.8236"
-            required
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : "")}
-            disabled={loading}
-          />
+        <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5">
+          <div className="flex items-start gap-2">
+            <Tag className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
+            <div className="min-w-0 flex-1 text-sm">
+              <p className="font-medium text-gray-800">Category (auto from description)</p>
+              {categoryLoading ? (
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Fetching recommendation…
+                </p>
+              ) : suggestedCategory ? (
+                <p className="mt-1 text-xs text-gray-700">
+                  Attached: <strong>{suggestedCategory.name}</strong>
+                </p>
+              ) : categoryError ? (
+                <p className="mt-1 text-xs text-red-600">{categoryError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Will call categories API after you pause typing (min {DESCRIPTION_MIN_CHARS}{" "}
+                  characters).
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
-        <Input
-          id="req-duration"
-          type="number"
-          min="1"
-          step="1"
-          label="Duration (seconds)"
-          placeholder="60"
-          required
-          value={durationSeconds}
-          onChange={(e) => setDurationSeconds(e.target.value ? parseInt(e.target.value, 10) : "")}
-          disabled={loading}
-        />
+        <div>
+          <span className="block text-sm font-medium text-gray-700 mb-2">Location</span>
+          <MapboxLocationPicker
+            location={address}
+            onLocationChange={setAddress}
+            latitude={latitude}
+            longitude={longitude}
+            onCoordinatesChange={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
+          />
+          <p className="mt-1.5 text-xs text-gray-500">
+            Search or click the map to set the request pin. Address is filled from Mapbox when
+            possible.
+          </p>
+        </div>
+
+        {requestType === "VIDEO" ? (
+          <Input
+            id="req-duration"
+            type="number"
+            min="1"
+            step="1"
+            label="Duration (seconds)"
+            placeholder="60"
+            required
+            value={durationSeconds}
+            onChange={(e) => setDurationSeconds(e.target.value ? parseInt(e.target.value, 10) : "")}
+            disabled={loading}
+          />
+        ) : (
+          <Input
+            id="req-image-count"
+            type="number"
+            min="1"
+            max="10"
+            step="1"
+            label="Number of images (1–10)"
+            placeholder="3"
+            required
+            value={requestedImageCount}
+            onChange={(e) =>
+              setRequestedImageCount(e.target.value ? parseInt(e.target.value, 10) : "")
+            }
+            disabled={loading}
+          />
+        )}
 
         <Input
           id="req-reward"
           type="number"
           step="0.01"
+          min={typeof activeMinReward === "number" ? activeMinReward : undefined}
           label="Reward Amount (₹)"
-          placeholder="15.00"
+          placeholder={
+            typeof activeMinReward === "number" ? String(activeMinReward) : "15.00"
+          }
           required
           value={rewardAmount}
           onChange={(e) => setRewardAmount(e.target.value ? parseFloat(e.target.value) : "")}
           disabled={loading}
         />
+        <p className="text-xs text-gray-500 -mt-2">
+          {settingsLoading ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Loading minimum reward…
+            </span>
+          ) : typeof activeMinReward === "number" ? (
+            <>
+              Minimum reward for {requestType === "IMAGE" ? "image" : "video"} requests:{" "}
+              <strong>₹{activeMinReward}</strong>
+            </>
+          ) : (
+            "Minimum reward unavailable."
+          )}
+        </p>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={loading} disabled={loading}>
-            Submit Video Request
+          <Button
+            type="submit"
+            isLoading={loading}
+            disabled={loading || categoryLoading || !suggestedCategory}
+          >
+            {requestType === "IMAGE" ? "Submit Image Request" : "Submit Video Request"}
           </Button>
         </div>
       </form>

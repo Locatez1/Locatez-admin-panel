@@ -14,6 +14,9 @@ export const getVideoRequestById = async (id: string) => {
 export const createVideoRequest = async (data: {
   title: string;
   description?: string;
+  requestType?: "VIDEO" | "IMAGE";
+  requestedImageCount?: number;
+  categoryId?: string;
   durationSeconds: number;
   rewardAmount: number;
   customLocation?: {

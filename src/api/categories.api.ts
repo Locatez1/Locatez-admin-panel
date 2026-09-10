@@ -3,10 +3,23 @@ import { Category, CategorySuggestion } from "../types";
 
 /**
  * User-facing active categories feed (GET /api/v1/categories)
+ * Pass `description` to get AI recommendation: `{ categories: Category[] }`.
  */
-export const getCategories = async () => {
-  const response = await apiClient.get<{ success: boolean; data: Category[] }>("/categories");
+export const getCategories = async (params?: { description?: string }) => {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: Category[] | { categories: Category[] };
+  }>("/categories", { params });
   return response.data;
+};
+
+/** Recommended category for a request description (GET /categories?description=). */
+export const getRecommendedCategories = async (description: string): Promise<Category[]> => {
+  const response = await getCategories({ description });
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.categories)) return data.categories;
+  return [];
 };
 
 /**

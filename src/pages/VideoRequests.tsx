@@ -159,7 +159,7 @@ export const VideoRequests: React.FC = () => {
           onClick={() => setIsCreateModalOpen(true)}
           className="self-start sm:self-auto flex items-center gap-1.5 shrink-0"
         >
-          <Plus className="h-4 w-4" /> Create Video Request
+          <Plus className="h-4 w-4" /> Create Request
         </Button>
       </div>
 
