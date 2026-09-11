@@ -41,7 +41,7 @@ export const getUserTransactions = async (userId: string, params?: any) => {
 
 export const getUserActivity = async (userId: string, params?: any) => {
   const response = await apiClient.get<PaginatedResponse<AuditLog>>("/audit-logs", {
-    params: { userId, ...params },
+    params: { userId, limit: 50, ...params },
   });
   return response.data;
 };

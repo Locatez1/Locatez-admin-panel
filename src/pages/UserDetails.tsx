@@ -116,6 +116,7 @@ export const UserDetails: React.FC = () => {
       const actList = Array.isArray(actData) ? actData : (actData?.items || []);
       setActivities(actList);
     } catch (err: any) {
+      setActivities([]);
       setActivityError(err.response?.data?.message || err.message || "Failed to fetch activity logs");
     } finally {
       setActivityLoading(false);
@@ -149,7 +150,7 @@ export const UserDetails: React.FC = () => {
   useEffect(() => {
     if (activeTab === "wallet" && !wallet && !walletError) {
       fetchWallet();
-    } else if (activeTab === "activity" && activities.length === 0 && !activityError) {
+    } else if (activeTab === "activity" && activities.length === 0 && !activityError && !activityLoading) {
       fetchActivity();
     }
   }, [activeTab, id]);
@@ -568,50 +569,78 @@ export const UserDetails: React.FC = () => {
                 <Activity className="h-4 w-4 text-primary" />
                 User Activity & Audit Trail
               </h3>
-              <p className="text-xs text-gray-500">Recent actions performed by this user in the application.</p>
+              <p className="text-xs text-gray-500">
+                All audit events for this user (including logins). Same data as{" "}
+                <code className="bg-gray-100 px-1 rounded text-[11px]">GET /audit-logs?userId=…</code>
+              </p>
             </div>
             <Button size="sm" variant="ghost" onClick={fetchActivity} isLoading={activityLoading}>
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
           </div>
 
+          {activityError && (
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {activityError}
+            </div>
+          )}
+
           {activityLoading ? (
             <div className="py-12 text-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
               <p className="mt-2 text-xs text-gray-500">Loading activity logs...</p>
             </div>
-          ) : activities.length === 0 ? (
+          ) : activities.length === 0 && !activityError ? (
             <div className="py-12 text-center text-gray-500 text-sm">
               No recent audit activity logged for this user.
             </div>
-          ) : (
+          ) : activities.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Action</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Entity Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Entity ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Description</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Entity</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date & Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {activities.map((act) => (
-                    <tr key={act.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-4 py-3.5 text-xs font-medium text-gray-900">{act.action}</td>
-                      <td className="px-4 py-3.5 text-xs text-gray-600">
-                        <Badge variant="info">{act.entityType}</Badge>
-                      </td>
-                      <td className="px-4 py-3.5 text-xs font-mono text-gray-600">{act.entityId}</td>
-                      <td className="px-4 py-3.5 text-xs text-gray-500">
-                        {new Date(act.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
+                  {activities.map((act) => {
+                    const desc =
+                      act.description ||
+                      (typeof act.metadata?.description === "string"
+                        ? act.metadata.description
+                        : null);
+                    return (
+                      <tr key={act.id} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-4 py-3.5 text-xs font-medium text-gray-900 whitespace-nowrap">
+                          {act.action}
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-600 max-w-md">
+                          {desc || "—"}
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-600">
+                          <div className="flex flex-col gap-0.5">
+                            {act.entityType ? <Badge variant="info">{act.entityType}</Badge> : null}
+                            {act.entityId ? (
+                              <span className="font-mono text-[11px] text-gray-500 truncate max-w-[140px]">
+                                {act.entityId}
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-500 whitespace-nowrap">
+                          {new Date(act.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

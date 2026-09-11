@@ -196,6 +196,7 @@ export interface AuditLog {
   action: string;
   entityType: string;
   entityId: string;
+  description?: string | null;
   metadata?: any;
   createdAt: string;
 }

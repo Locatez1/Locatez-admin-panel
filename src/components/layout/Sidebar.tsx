@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Video, Tag, Compass, ShieldAlert, MessageSquare, Settings, Store, Lightbulb, MapPin } from "lucide-react";
+import { LayoutDashboard, Users, Video, Tag, Compass, ShieldAlert, MessageSquare, Settings, Store, Lightbulb, MapPin, HelpCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "../../context/AuthContext";
 
@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { name: "Marketplace VOD", path: "/marketplace", icon: Store, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Categories", path: "/categories", icon: Tag, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Ideas", path: "/admin/ideas", icon: Lightbulb, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
+    { name: "FAQs", path: "/admin/faqs", icon: HelpCircle, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Popular Places (Admin)", path: "/admin/popular-places", icon: Compass, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Location Restrictions", path: "/location-restrictions", icon: MapPin, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Audit Logs", path: "/audit-logs", icon: ShieldAlert, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
