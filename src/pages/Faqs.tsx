@@ -11,6 +11,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { CustomSelect } from "../components/common/CustomSelect";
 import {
   HelpCircle,
   Plus,
@@ -20,6 +21,9 @@ import {
   Search,
   AlertTriangle,
   RefreshCw,
+  Filter,
+  X,
+  RotateCcw,
 } from "lucide-react";
 
 export const Faqs: React.FC = () => {
@@ -256,7 +260,7 @@ export const Faqs: React.FC = () => {
             FAQs
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage help content shown in the mobile app via <code className="text-xs bg-gray-100 px-1 rounded">GET /faqs</code>.
+            Manage help content shown in the mobile app.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -270,26 +274,95 @@ export const Faqs: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="search"
-            placeholder="Search question or answer…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+      {/* Styled Search & Filter Container Card */}
+      <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            <Filter className="h-4 w-4 text-primary-500" />
+            <span>Search & Filter FAQs</span>
+            {(searchQuery || statusFilter !== "all") && (
+              <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                Active
+              </span>
+            )}
+          </div>
+          {(searchQuery || statusFilter !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Reset Filters
+            </button>
+          )}
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="all">All statuses</option>
-          <option value="active">Active only</option>
-          <option value="inactive">Inactive only</option>
-        </select>
+
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+          {/* Search Input */}
+          <div className="relative sm:col-span-8">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Search questions or answers…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-neutral-300 pl-9 pr-8 py-2 text-sm text-neutral-900 placeholder-neutral-400 bg-neutral-50/50 hover:bg-white focus:bg-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status Dropdown */}
+          <div className="sm:col-span-4">
+            <CustomSelect
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val as any)}
+              placeholder="All Statuses"
+              options={[
+                { label: "All Statuses", value: "all" },
+                { label: "Active Only", value: "active" },
+                { label: "Inactive Only", value: "inactive" },
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Status Pill Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Status:</span>
+          {[
+            { label: "All", value: "all" },
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+          ].map((st) => {
+            const isActive = statusFilter === st.value;
+            return (
+              <button
+                key={st.value}
+                type="button"
+                onClick={() => setStatusFilter(st.value as any)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                }`}
+              >
+                {st.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error && (
@@ -328,8 +401,8 @@ export const Faqs: React.FC = () => {
                       <span className="line-clamp-2">{faq.answer}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={faq.isActive ? "success" : "warning"}>
-                        {faq.isActive ? "Active" : "Disabled"}
+                      <Badge variant={faq.isActive ? "success" : "inactive"}>
+                        {faq.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">

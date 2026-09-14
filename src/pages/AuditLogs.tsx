@@ -5,7 +5,8 @@ import { useDebounce } from "../hooks/useDebounce";
 import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Modal } from "../components/common/Modal";
-import { Eye, Info } from "lucide-react";
+import { CustomSelect } from "../components/common/CustomSelect";
+import { Eye, Info, Filter, X, RotateCcw, Layers } from "lucide-react";
 
 export const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -55,34 +56,110 @@ export const AuditLogs: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <select
-          className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6"
-          value={actionFilter}
-          onChange={(e) => {
-            setActionFilter(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Actions</option>
-          <option value="CREATE">CREATE</option>
-          <option value="UPDATE">UPDATE</option>
-          <option value="DELETE">DELETE</option>
-          <option value="LOGIN">LOGIN</option>
-          <option value="APPROVE">APPROVE</option>
-          <option value="REJECT">REJECT</option>
-        </select>
-        
-        <input
-          type="text"
-          placeholder="Entity Type (e.g., USER)"
-          className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
-          value={entityTypeFilter}
-          onChange={(e) => {
-            setEntityTypeFilter(e.target.value);
-            setPage(1);
-          }}
-        />
+      {/* Styled Filter Container */}
+      <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            <Filter className="h-4 w-4 text-primary-500" />
+            <span>Audit Trail Filters</span>
+            {(actionFilter || entityTypeFilter) && (
+              <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                Active
+              </span>
+            )}
+          </div>
+          {(actionFilter || entityTypeFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setActionFilter("");
+                setEntityTypeFilter("");
+                setPage(1);
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          {/* Action Filter Dropdown */}
+          <div className="md:col-span-5">
+            <CustomSelect
+              value={actionFilter}
+              onChange={(val) => {
+                setActionFilter(val);
+                setPage(1);
+              }}
+              placeholder="All Actions"
+              options={[
+                { label: "All Actions", value: "" },
+                { label: "CREATE", value: "CREATE" },
+                { label: "UPDATE", value: "UPDATE" },
+                { label: "DELETE", value: "DELETE" },
+                { label: "LOGIN", value: "LOGIN" },
+                { label: "APPROVE", value: "APPROVE" },
+                { label: "REJECT", value: "REJECT" },
+              ]}
+            />
+          </div>
+
+          {/* Entity Type Input */}
+          <div className="relative md:col-span-7">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <Layers className="h-4 w-4" />
+            </div>
+            <input
+              type="text"
+              placeholder="Filter by Entity Type (e.g. USER, VIDEO_REQUEST)..."
+              className="block w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-neutral-50/50 hover:bg-white focus:bg-white transition"
+              value={entityTypeFilter}
+              onChange={(e) => {
+                setEntityTypeFilter(e.target.value);
+                setPage(1);
+              }}
+            />
+            {entityTypeFilter && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEntityTypeFilter("");
+                  setPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Action Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Action:</span>
+          {["", "CREATE", "UPDATE", "DELETE", "LOGIN", "APPROVE", "REJECT"].map((act) => {
+            const isActive = actionFilter.toUpperCase() === act.toUpperCase();
+            return (
+              <button
+                key={act || "ALL"}
+                type="button"
+                onClick={() => {
+                  setActionFilter(act);
+                  setPage(1);
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                }`}
+              >
+                {act || "All Actions"}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error ? (
@@ -129,7 +206,7 @@ export const AuditLogs: React.FC = () => {
                     {new Date(log.createdAt).toLocaleString()}
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button onClick={() => setSelectedLog(log)} className="text-blue-600 hover:text-blue-900">
+                    <button onClick={() => setSelectedLog(log)} className="text-primary hover:text-primary-dark">
                       <Eye className="h-5 w-5" />
                     </button>
                   </td>

@@ -14,6 +14,7 @@ import {
   Compass,
   Info,
   Search,
+  X,
 } from "lucide-react";
 
 export const PopularPlacesFeed: React.FC = () => {
@@ -152,26 +153,38 @@ export const PopularPlacesFeed: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Compass className="h-7 w-7 text-indigo-600" /> Popular Places
+            <Compass className="h-7 w-7 text-primary" /> Popular Places
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Explore active trending locations and request real-time live video coverage from creators.
           </p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-4 w-4 text-gray-400" />
+        <div className="bg-white p-2 rounded-xl border border-neutral-200/90 shadow-2xs w-full sm:w-80">
+          <div className="relative w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <input
+              type="text"
+              className="block w-full rounded-lg border border-neutral-300 py-1.5 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 bg-neutral-50/50 hover:bg-white focus:bg-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition"
+              placeholder="Search places by name or address..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            className="block w-full rounded-lg border-0 py-2 pl-9 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
-            placeholder="Search places..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
         </div>
       </div>
 
@@ -260,7 +273,7 @@ export const PopularPlacesFeed: React.FC = () => {
                           e.stopPropagation();
                           handleOpenDetails(place);
                         }}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                        className="text-xs text-primary hover:text-primary-dark font-semibold flex items-center gap-1"
                       >
                         <Info className="h-3.5 w-3.5" /> Details
                       </button>
@@ -268,7 +281,7 @@ export const PopularPlacesFeed: React.FC = () => {
                       <Button
                         size="sm"
                         onClick={(e) => handleOpenRequestVideo(place, e)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-1.5 px-3.5 rounded-lg flex items-center gap-1.5 shadow-sm"
+                        className="bg-primary hover:bg-primary-dark text-white font-semibold text-xs py-1.5 px-3.5 rounded-lg flex items-center gap-1.5 shadow-sm border-transparent"
                       >
                         <Video className="h-3.5 w-3.5" /> Request Video
                       </Button>

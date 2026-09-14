@@ -4,6 +4,7 @@ import { getUserById, getUserWallet, getUserTransactions, getUserActivity } from
 import { User, Wallet, WalletTransaction, AuditLog, TransactionType } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
 import { Badge } from "../components/common/Badge";
+import { CustomSelect } from "../components/common/CustomSelect";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import {
@@ -472,17 +473,20 @@ export const UserDetails: React.FC = () => {
                   />
                 </div>
 
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="py-1.5 px-3 text-xs rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-primary bg-white"
-                >
-                  <option value="">All Types</option>
-                  <option value="CREDIT">CREDIT</option>
-                  <option value="DEBIT">DEBIT</option>
-                  <option value="HOLD">HOLD</option>
-                  <option value="RELEASE">RELEASE</option>
-                </select>
+                <div className="w-36">
+                  <CustomSelect
+                    value={typeFilter}
+                    onChange={setTypeFilter}
+                    placeholder="All Types"
+                    options={[
+                      { label: "All Types", value: "" },
+                      { label: "CREDIT", value: "CREDIT" },
+                      { label: "DEBIT", value: "DEBIT" },
+                      { label: "HOLD", value: "HOLD" },
+                      { label: "RELEASE", value: "RELEASE" },
+                    ]}
+                  />
+                </div>
 
                 <Button
                   size="sm"
@@ -570,8 +574,7 @@ export const UserDetails: React.FC = () => {
                 User Activity & Audit Trail
               </h3>
               <p className="text-xs text-gray-500">
-                All audit events for this user (including logins). Same data as{" "}
-                <code className="bg-gray-100 px-1 rounded text-[11px]">GET /audit-logs?userId=…</code>
+                All audit events and login logs recorded for this user.
               </p>
             </div>
             <Button size="sm" variant="ghost" onClick={fetchActivity} isLoading={activityLoading}>

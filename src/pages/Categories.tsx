@@ -236,29 +236,27 @@ export const Categories: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 overflow-x-auto">
-        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max">
-          <button
-            onClick={() => setActiveTab("categories")}
-            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 transition ${
-              activeTab === "categories"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <Tag className="h-4 w-4" /> Active & Admin Categories ({categories.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("suggestions")}
-            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 transition ${
-              activeTab === "suggestions"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <Sparkles className="h-4 w-4 text-purple-600" /> AI Suggestions ({suggestions.length})
-          </button>
-        </nav>
+      <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-neutral-200 shadow-2xs inline-flex flex-wrap items-center gap-1.5">
+        <button
+          onClick={() => setActiveTab("categories")}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer ${
+            activeTab === "categories"
+              ? "bg-primary-500 text-white shadow-2xs"
+              : "bg-transparent text-neutral-600 hover:bg-neutral-100"
+          }`}
+        >
+          <Tag className="h-4 w-4" /> Active & Admin Categories ({categories.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("suggestions")}
+          className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer ${
+            activeTab === "suggestions"
+              ? "bg-primary-500 text-white shadow-2xs"
+              : "bg-transparent text-neutral-600 hover:bg-neutral-100"
+          }`}
+        >
+          <Sparkles className={`h-4 w-4 ${activeTab === "suggestions" ? "text-white" : "text-purple-600"}`} /> AI Suggestions ({suggestions.length})
+        </button>
       </div>
 
       {/* TAB 1: Categories Management */}
@@ -326,7 +324,7 @@ export const Categories: React.FC = () => {
                           {cat.isActive ? (
                             <Badge variant="success">ACTIVE</Badge>
                           ) : (
-                            <Badge variant="default" className="bg-gray-100 text-gray-600">INACTIVE</Badge>
+                            <Badge variant="inactive">INACTIVE</Badge>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
@@ -563,7 +561,7 @@ export const Categories: React.FC = () => {
             Are you sure you want to permanently delete category <strong className="text-gray-900">"{deletingCategory?.name}"</strong>?
           </p>
           <div className="bg-red-50 border border-red-100 rounded p-3 text-xs text-red-700">
-            This issues an HTTP <code className="bg-red-100 px-1 py-0.5 rounded font-mono font-bold">DELETE /api/v1/categories/{deletingCategory?.id}</code> request to permanently delete the category record.
+            This action will permanently remove this category record from the platform.
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t">

@@ -32,26 +32,26 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6 lg:px-8">
+    <header className="flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="md:hidden rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
+            className="md:hidden rounded-md p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 focus:outline-none"
             aria-label="Open sidebar menu"
           >
             <Menu className="h-6 w-6" />
           </button>
         )}
-        <span className="font-bold text-primary text-lg md:hidden">Locatez</span>
+        <span className="font-bold text-primary-500 text-lg md:hidden">Locatez</span>
       </div>
       <div className="flex items-center space-x-3 sm:space-x-4">
         <div className="flex flex-col items-end">
-          <span className="text-sm font-semibold text-gray-900">{getFirstName(user)}</span>
+          <span className="text-sm font-semibold text-neutral-900">{getFirstName(user)}</span>
         </div>
         <button
           onClick={handleLogout}
-          className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="rounded-full bg-white p-1 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition"
           title="Log out"
         >
           <span className="sr-only">Log out</span>
@@ -61,3 +61,4 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
     </header>
   );
 };
+

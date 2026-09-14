@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             {label}
           </label>
         )}
@@ -27,16 +27,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           }}
           className={twMerge(
             clsx(
-              "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-500",
+              "block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-neutral-100 disabled:text-neutral-400 transition-colors",
               error && "border-red-500 focus:border-red-500 focus:ring-red-500",
               className
             )
           )}
         />
-        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+        {error && <p className="mt-1 text-xs text-red-600 font-medium">{error}</p>}
       </div>
     );
   }
 );
 
 Input.displayName = "Input";
+

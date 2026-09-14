@@ -11,6 +11,7 @@ import {
 } from "../api/restrictedPoi.api";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
+import { CustomSelect } from "../components/common/CustomSelect";
 import { Modal } from "../components/common/Modal";
 import { Switch } from "../components/common/Switch";
 import {
@@ -349,16 +350,14 @@ export const LocationRestrictions: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">Level</label>
-            <select
+            <CustomSelect
               value={form.level}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, level: e.target.value as RestrictionPoiLevel }))
-              }
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="HARD">HARD — block create</option>
-              <option value="CONDITIONAL">CONDITIONAL — require approval</option>
-            </select>
+              onChange={(val) => setForm((f) => ({ ...f, level: val as RestrictionPoiLevel }))}
+              options={[
+                { label: "HARD — block create", value: "HARD" },
+                { label: "CONDITIONAL — require approval", value: "CONDITIONAL" },
+              ]}
+            />
           </div>
 
           <div>

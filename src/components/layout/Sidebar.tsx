@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Mobile Backdrop Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-xs md:hidden"
           onClick={onClose}
         />
       )}
@@ -44,17 +44,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar Container */}
       <div
         className={clsx(
-          "flex w-64 flex-col bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out z-50",
+          "flex w-64 flex-col bg-white border-r border-neutral-200 transition-transform duration-300 ease-in-out z-50",
           "fixed inset-y-0 left-0 md:static md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
-          <h1 className="text-xl font-bold text-primary">Locatez Admin</h1>
+        <div className="flex h-16 items-center justify-between border-b border-neutral-200 px-4">
+          <h1 className="text-xl font-bold text-primary-500">Locatez Admin</h1>
           {onClose && (
             <button
               onClick={onClose}
-              className="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
+              className="md:hidden text-neutral-500 hover:text-neutral-700 focus:outline-none"
             >
               &times;
             </button>
@@ -69,16 +69,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 to={item.path}
                 onClick={onClose}
                 className={clsx(
-                  "group flex items-center rounded-md px-2 py-2 text-sm font-medium transition",
+                  "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                   isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-primary-100 text-primary-900 font-semibold shadow-xs"
+                    : "text-neutral-600 hover:bg-primary-100/50 hover:text-primary-900"
                 )}
               >
                 <item.icon
                   className={clsx(
-                    "mr-3 h-5 w-5 flex-shrink-0",
-                    isActive ? "text-gray-900" : "text-gray-400 group-hover:text-gray-500"
+                    "mr-3 h-5 w-5 flex-shrink-0 transition-colors",
+                    isActive ? "text-primary-700" : "text-neutral-400 group-hover:text-primary-600"
                   )}
                   aria-hidden="true"
                 />
@@ -91,3 +91,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
+

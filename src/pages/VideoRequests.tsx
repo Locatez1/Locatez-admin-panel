@@ -10,7 +10,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
-import { Eye, AlertTriangle, Plus, MessageSquare, Film } from "lucide-react";
+import { Eye, AlertTriangle, Plus, MessageSquare, Film, Filter } from "lucide-react";
 
 export const VideoRequests: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -126,23 +126,28 @@ export const VideoRequests: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
       case "PENDING":
         return <Badge variant="warning">PENDING</Badge>;
       case "OPEN":
         return <Badge variant="info">OPEN</Badge>;
       case "ACCEPTED":
-        return (
-          <Badge variant="info" className="bg-blue-100 text-blue-800">
-            ACCEPTED
-          </Badge>
-        );
+        return <Badge variant="blue">ACCEPTED</Badge>;
+      case "ONGOING":
+      case "IN_PROGRESS":
+      case "FULFILMENT_PENDING":
+      case "MODERATOR_APPROVAL_PENDING":
+        return <Badge variant="ongoing">{status.replace(/_/g, " ")}</Badge>;
       case "COMPLETED":
-        return <Badge variant="success">COMPLETED</Badge>;
+      case "APPROVED":
+      case "FULFILLED":
+        return <Badge variant="success">{status}</Badge>;
       case "REJECTED":
-        return <Badge variant="danger">REJECTED</Badge>;
+      case "DECLINED":
+        return <Badge variant="danger">{status}</Badge>;
       case "CANCELLED":
-        return <Badge variant="default">CANCELLED</Badge>;
+      case "EXPIRED":
+        return <Badge variant="cancelled">{status}</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -163,15 +168,15 @@ export const VideoRequests: React.FC = () => {
         </Button>
       </div>
 
-      <div className="overflow-hidden bg-white shadow sm:rounded-lg border border-amber-200">
-        <div className="px-4 py-4 sm:px-6 border-b border-amber-100 bg-amber-50/80 flex items-center justify-between gap-3 flex-wrap">
+      <div className="overflow-hidden bg-white shadow-xs sm:rounded-xl border border-yellow-500/30">
+        <div className="px-4 py-4 sm:px-6 border-b border-yellow-500/20 bg-yellow-50 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <Film className="h-5 w-5 text-amber-700" />
+            <Film className="h-5 w-5 text-yellow-900" />
             <div>
-              <h2 className="text-base font-semibold text-amber-950">
+              <h2 className="text-base font-semibold text-yellow-900">
                 Fulfilment media awaiting approval
               </h2>
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-yellow-800">
                 Submitted video/images when “Require approval for fulfilment media” is ON.
               </p>
             </div>
@@ -180,10 +185,10 @@ export const VideoRequests: React.FC = () => {
         </div>
         <div className="p-4">
           {pendingMediaError ? (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{pendingMediaError}</div>
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-900 border border-red-500/20">{pendingMediaError}</div>
           ) : pendingMediaLoading ? (
             <div className="flex justify-center py-6">
-              <div className="h-6 w-6 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
+              <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : pendingMedia.length === 0 ? (
             <p className="text-sm text-gray-500 py-2">No fulfilment media waiting for review.</p>
@@ -208,7 +213,7 @@ export const VideoRequests: React.FC = () => {
                   </div>
                   <Link
                     to={`/video-requests/${item.videoRequestId}#fulfilment-media-review`}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-800 hover:text-amber-950"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-yellow-900 hover:text-black"
                   >
                     <Eye className="h-4 w-4" /> Review media
                   </Link>
@@ -219,20 +224,52 @@ export const VideoRequests: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <select
-          className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6"
-          value={statusFilter}
-          onChange={(e) => handleStatusFilterChange(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="PENDING">PENDING</option>
-          <option value="OPEN">OPEN</option>
-          <option value="ACCEPTED">ACCEPTED</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="REJECTED">REJECTED</option>
-          <option value="CANCELLED">CANCELLED</option>
-        </select>
+      {/* Status Filter Container & Tabs */}
+      <div className="bg-white p-3 sm:p-4 rounded-xl border border-neutral-200 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 text-neutral-700 text-xs font-semibold uppercase tracking-wider">
+            <Filter className="h-4 w-4 text-primary-500" />
+            <span>Filter Status</span>
+          </div>
+          {statusFilter && (
+            <button
+              onClick={() => handleStatusFilterChange("")}
+              className="text-xs text-primary-600 hover:text-primary-800 font-medium transition cursor-pointer"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
+
+        {/* Status Pill Tabs (Desktop / Scrollable Mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { label: "All Statuses", value: "" },
+            { label: "Pending", value: "PENDING" },
+            { label: "Open", value: "OPEN" },
+            { label: "Accepted", value: "ACCEPTED" },
+            { label: "Ongoing", value: "ONGOING" },
+            { label: "Completed", value: "COMPLETED" },
+            { label: "Rejected", value: "REJECTED" },
+            { label: "Cancelled", value: "CANCELLED" },
+          ].map((tab) => {
+            const isActive = statusFilter.toUpperCase() === tab.value.toUpperCase() || (!statusFilter && !tab.value);
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => handleStatusFilterChange(tab.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-primary-100/60 hover:text-primary-900 border border-neutral-200/80"
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error ? (
@@ -314,14 +351,14 @@ export const VideoRequests: React.FC = () => {
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 flex items-center justify-end gap-2.5">
                     <Link
                       to={`/video-requests/${request.id}${location.search}`}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary-dark"
                       title="View Request Details"
                     >
                       <Eye className="h-5 w-5" />
                     </Link>
                     <Link
                       to={`/video-requests/${request.id}${location.search}#request-chat-audit`}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      className="text-primary-700 hover:text-primary-900"
                       title="View Request Chat & Communication"
                     >
                       <MessageSquare className="h-5 w-5" />

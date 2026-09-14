@@ -1,19 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-secondary: #6b7280;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  /* Primary Palette (Figma Design System - Teal/Turquoise) */
+  --color-primary-100: #E9F6F5;
+  --color-primary-200: #C8E9E7;
+  --color-primary-300: #92D2CF;
+  --color-primary-400: #5CBBB6;
+  --color-primary-500: #25A59E;
+  --color-primary-600: #268983;
+  --color-primary-700: #276D69;
+  --color-primary-800: #27504E;
+  --color-primary-900: #283F3E;
+
+  --color-primary: #25A59E;
+  --color-primary-light: #E9F6F5;
+  --color-primary-dark: #268983;
+
+  /* Neutral Palette (Figma Design System) */
+  --color-neutral-0: #FFFFFF;
+  --color-neutral-50: #E9EBEB;
+  --color-neutral-100: #D4D6D6;
+  --color-neutral-200: #BEC2C2;
+  --color-neutral-300: #A9AEAD;
+  --color-neutral-400: #939999;
+  --color-neutral-500: #7E8585;
+  --color-neutral-600: #697170;
+  --color-neutral-700: #535D5C;
+  --color-neutral-800: #3E4847;
+  --color-neutral-900: #283433;
+
+  /* Green Palette (Figma Design System) */
+  --color-green-50: #F0FFF4;
+  --color-green-500: #38A169;
+  --color-green-900: #1C4532;
+
+  /* Yellow Palette (Figma Design System) */
+  --color-yellow-50: #FFFFF0;
+  --color-yellow-500: #D69E2E;
+  --color-yellow-900: #5F370E;
+
+  /* Red Palette (Figma Design System) */
+  --color-red-50: #FFF5F5;
+  --color-red-500: #E53E3E;
+  --color-red-900: #63171B;
+
+  /* Alert / Status Colors */
+  --color-success: #38A169;
+  --color-danger: #E53E3E;
+  --color-warning: #D69E2E;
 }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: #f8fafc;
+  color: #283433;
 }
 
 * {

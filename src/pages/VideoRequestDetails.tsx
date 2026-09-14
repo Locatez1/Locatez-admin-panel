@@ -161,7 +161,7 @@ export const VideoRequestDetails: React.FC = () => {
       }
     } catch (err: any) {
       console.warn("[Admin Chat Audit] Failed to fetch rooms:", err);
-      const msg = err.response?.data?.message || err.message || "Admin chat audit endpoint GET /api/v1/admin/video-requests/:id/chats is pending backend deployment.";
+      const msg = err.response?.data?.message || err.message || "Admin chat audit feature is pending backend deployment.";
       setChatError(msg);
     } finally {
       setRoomsLoading(false);
@@ -376,13 +376,14 @@ export const VideoRequestDetails: React.FC = () => {
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
       case "PENDING": return <Badge variant="warning">PENDING</Badge>;
       case "OPEN": return <Badge variant="info">OPEN</Badge>;
-      case "ACCEPTED": return <Badge variant="info" className="bg-blue-100 text-blue-800">ACCEPTED</Badge>;
-      case "COMPLETED": return <Badge variant="success">COMPLETED</Badge>;
-      case "REJECTED": return <Badge variant="danger">REJECTED</Badge>;
-      case "CANCELLED": return <Badge variant="default">CANCELLED</Badge>;
+      case "ACCEPTED": return <Badge variant="blue">ACCEPTED</Badge>;
+      case "ONGOING": case "IN_PROGRESS": case "FULFILMENT_PENDING": case "MODERATOR_APPROVAL_PENDING": return <Badge variant="ongoing">{status.replace(/_/g, " ")}</Badge>;
+      case "COMPLETED": case "APPROVED": case "FULFILLED": return <Badge variant="success">{status}</Badge>;
+      case "REJECTED": case "DECLINED": return <Badge variant="danger">{status}</Badge>;
+      case "CANCELLED": case "EXPIRED": return <Badge variant="cancelled">{status}</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -593,18 +594,6 @@ export const VideoRequestDetails: React.FC = () => {
               <dt className="text-sm font-medium text-gray-500">Description</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{request.description || "No description provided."}</dd>
             </div>
-
-            {(request.status === "REJECTED" || getRejectionReasonText(request)) && (
-              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6 bg-red-50/60">
-                <dt className="text-sm font-semibold text-red-900 flex items-center gap-1.5">
-                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
-                  Rejection Reason
-                </dt>
-                <dd className="mt-1 text-sm text-red-900 sm:col-span-2 sm:mt-0 font-medium">
-                  {getRejectionReasonText(request)}
-                </dd>
-              </div>
-            )}
 
             {/* Location Address */}
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6 bg-slate-50/50">
@@ -998,7 +987,7 @@ export const VideoRequestDetails: React.FC = () => {
             <MessageSquare className="h-5 w-5 text-indigo-600" />
             <div>
               <h3 className="text-lg font-medium leading-6 text-gray-900">Request Chat History Audit</h3>
-              <p className="text-xs text-gray-500">Read-only admin audit of candidate chat rooms via <code className="bg-gray-200 px-1 py-0.5 rounded font-mono text-[11px]">GET /api/v1/admin/video-requests/:id/chats</code>.</p>
+              <p className="text-xs text-gray-500">Read-only admin audit of candidate chat rooms.</p>
             </div>
           </div>
 
@@ -1091,7 +1080,7 @@ export const VideoRequestDetails: React.FC = () => {
                 <h4 className="text-sm font-semibold text-amber-900">Admin Chat Audit Status</h4>
                 <p className="mt-1 text-amber-700">{chatError}</p>
                 <p className="mt-1 text-[11px] text-amber-600">
-                  Ensure backend admin endpoints <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">GET /api/v1/admin/video-requests/{id}/chats</code> are deployed for admin chat audit capability.
+                  Ensure backend chat service is configured for admin chat audit capability.
                 </p>
               </div>
             </div>

@@ -125,7 +125,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={`text-xs font-mono break-all underline flex items-center gap-1 ${
-              isOwnMessage ? "text-indigo-100 hover:text-white" : "text-indigo-600 hover:underline"
+              isOwnMessage ? "text-primary-100 hover:text-white" : "text-primary-700 hover:text-primary-900"
             }`}
           >
             <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
@@ -159,7 +159,7 @@ export const ChatMessageContent: React.FC<ChatMessageContentProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           className={`break-all underline font-medium ${
-            isOwnMessage ? "text-white underline hover:opacity-90" : "text-indigo-600 hover:text-indigo-800"
+            isOwnMessage ? "text-white underline hover:opacity-90" : "text-primary-700 hover:text-primary-900"
           }`}
         >
           {part}

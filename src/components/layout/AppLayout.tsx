@@ -7,7 +7,7 @@ export const AppLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100 relative">
+    <div className="flex h-screen overflow-hidden bg-neutral-50 relative">
       <Sidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -21,3 +21,4 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+

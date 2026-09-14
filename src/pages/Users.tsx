@@ -8,8 +8,9 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { CustomSelect } from "../components/common/CustomSelect";
 import { Link } from "react-router-dom";
-import { Search, Eye, Trash2, Ban, CheckCircle, AlertTriangle, MapPin } from "lucide-react";
+import { Search, Eye, Trash2, Ban, CheckCircle, AlertTriangle, MapPin, Filter, X, Shield, RotateCcw } from "lucide-react";
 
 export const Users: React.FC = () => {
   const { role: currentUserRole } = useAuth();
@@ -132,48 +133,130 @@ export const Users: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-5 w-5 text-gray-400" />
+      {/* Styled Filter & Search Card */}
+      <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            <Filter className="h-4 w-4 text-primary-500" />
+            <span>Search & Filters</span>
+            {(search || roleFilter || statusFilter) && (
+              <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                Active
+              </span>
+            )}
           </div>
-          <input
-            type="text"
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
+          {(search || roleFilter || statusFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setRoleFilter("");
+                setStatusFilter("");
+                setPage(1);
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Reset Filters
+            </button>
+          )}
         </div>
-        <select
-          className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6"
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Roles</option>
-          <option value="USER">USER</option>
-          <option value="MODERATOR">MODERATOR</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
-        <select
-          className="block w-full sm:w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6"
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Statuses</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="BLOCKED">BLOCKED</option>
-          <option value="SUSPENDED">SUSPENDED</option>
-        </select>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          {/* Search Input */}
+          <div className="relative md:col-span-6">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <input
+              type="text"
+              className="block w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-neutral-50/50 hover:bg-white focus:bg-white transition"
+              placeholder="Search by name, email, or username..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Role Dropdown */}
+          <div className="md:col-span-3">
+            <CustomSelect
+              icon={<Shield className="h-4 w-4" />}
+              value={roleFilter}
+              onChange={(val) => {
+                setRoleFilter(val);
+                setPage(1);
+              }}
+              placeholder="All Roles"
+              options={[
+                { label: "All Roles", value: "" },
+                { label: "USER", value: "USER" },
+                { label: "MODERATOR", value: "MODERATOR" },
+                { label: "ADMIN", value: "ADMIN" },
+              ]}
+            />
+          </div>
+
+          {/* Status Dropdown */}
+          <div className="md:col-span-3">
+            <CustomSelect
+              value={statusFilter}
+              onChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+              }}
+              placeholder="All Statuses"
+              options={[
+                { label: "All Statuses", value: "" },
+                { label: "ACTIVE", value: "ACTIVE" },
+                { label: "BLOCKED", value: "BLOCKED" },
+                { label: "SUSPENDED", value: "SUSPENDED" },
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Status Pill Tabs Quick Filter */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Status:</span>
+          {[
+            { label: "All", value: "" },
+            { label: "Active", value: "ACTIVE" },
+            { label: "Blocked", value: "BLOCKED" },
+            { label: "Suspended", value: "SUSPENDED" },
+          ].map((st) => {
+            const isActive = statusFilter.toUpperCase() === st.value.toUpperCase();
+            return (
+              <button
+                key={st.value}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(st.value);
+                  setPage(1);
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                }`}
+              >
+                {st.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error ? (
@@ -218,14 +301,14 @@ export const Users: React.FC = () => {
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <div className="flex justify-end gap-2">
-                      <Link to={`/users/${user.id}`} className="text-blue-600 hover:text-blue-900" title="View">
+                      <Link to={`/users/${user.id}`} className="text-primary hover:text-primary-dark" title="View">
                         <Eye className="h-5 w-5" />
                       </Link>
                       {typeof user.profile?.latitude === "number" &&
                         typeof user.profile?.longitude === "number" && (
                           <Link
                             to={`/users/${user.id}?createRequest=1`}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-primary-700 hover:text-primary-900"
                             title="Create request near this user"
                           >
                             <MapPin className="h-5 w-5" />
@@ -240,7 +323,7 @@ export const Users: React.FC = () => {
                                 setActionStatus("ACTIVE");
                                 setIsStatusModalOpen(true);
                               }}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-green-500 hover:text-green-900"
                               title="Activate"
                             >
                               <CheckCircle className="h-5 w-5" />
@@ -252,7 +335,7 @@ export const Users: React.FC = () => {
                                 setActionStatus("BLOCKED");
                                 setIsStatusModalOpen(true);
                               }}
-                              className="text-yellow-600 hover:text-yellow-900"
+                              className="text-yellow-500 hover:text-yellow-900"
                               title="Block"
                             >
                               <Ban className="h-5 w-5" />
@@ -263,7 +346,7 @@ export const Users: React.FC = () => {
                               setSelectedUser(user);
                               setIsDeleteModalOpen(true);
                             }}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-500 hover:text-red-900"
                             title="Delete"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -295,14 +378,14 @@ export const Users: React.FC = () => {
           <Input label="Password" type="password" required minLength={6} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Role</label>
-            <select
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            <CustomSelect
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            >
-              <option value="USER">USER</option>
-              <option value="MODERATOR">MODERATOR</option>
-            </select>
+              onChange={(val) => setFormData({ ...formData, role: val })}
+              options={[
+                { label: "USER", value: "USER" },
+                { label: "MODERATOR", value: "MODERATOR" },
+              ]}
+            />
           </div>
           <div className="pt-4 flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>

@@ -173,7 +173,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
       // Create Draggable Mapbox Marker
       const marker = new mapboxgl.Marker({
         draggable: true,
-        color: "#4f46e5", // Indigo theme color
+        color: "#25A59E", // Figma Primary Teal
       })
         .setLngLat([defaultLng, defaultLat])
         .addTo(map);
@@ -393,12 +393,12 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
   return (
     <div className="space-y-3">
       {tokenError && (
-        <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded-md text-xs flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-50 border border-red-300 text-red-900 p-3 rounded-md text-xs flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold">Mapbox Access Token Issue Detected</p>
-            <p className="text-amber-800 mt-0.5">
-              Mapbox returned <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">401 Unauthorized</code> for the current token. Please set a valid Mapbox public token starting with <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">pk.</code> in <code className="font-mono font-bold">.env</code> (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">VITE_MAPBOX_ACCESS_TOKEN</code>) and restart the dev server.
+            <p className="text-red-800 mt-0.5">
+              Mapbox returned <code className="font-mono bg-red-100 px-1 py-0.5 rounded">401 Unauthorized</code> for the current token. Please set a valid Mapbox public token starting with <code className="font-mono bg-red-100 px-1 py-0.5 rounded">pk.</code> in <code className="font-mono font-bold">.env</code> (<code className="font-mono bg-red-100 px-1 py-0.5 rounded">VITE_MAPBOX_ACCESS_TOKEN</code>) and restart the dev server.
             </p>
           </div>
         </div>
@@ -407,19 +407,19 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
       {/* 1. Single Location Search Input + Geolocation Button */}
       <div className="relative">
         <div className="flex items-center justify-between mb-1">
-          <label htmlFor="mapbox-single-search" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="mapbox-single-search" className="block text-sm font-medium text-neutral-700">
             Search Location on Map
           </label>
           <button
             type="button"
             onClick={handleUseCurrentLocation}
             disabled={isLocating}
-            className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-md border border-indigo-200 flex items-center gap-1.5 transition cursor-pointer"
+            className="text-xs bg-primary-100 hover:bg-primary-100/80 text-primary-900 font-semibold px-2.5 py-1 rounded-md border border-primary-300 flex items-center gap-1.5 transition cursor-pointer"
           >
             {isLocating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-600" />
             ) : (
-              <Crosshair className="h-3.5 w-3.5 text-indigo-600" />
+              <Crosshair className="h-3.5 w-3.5 text-primary-600" />
             )}
             <span>Use Current Location</span>
           </button>
@@ -433,27 +433,27 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-            className="w-full pl-9 pr-8 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full pl-9 pr-8 py-2 border border-neutral-300 rounded-md text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
           {isSearching && (
-            <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-indigo-600" />
+            <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-primary-600" />
           )}
         </div>
 
         {/* Search Results Dropdown */}
         {showDropdown && searchResults.length > 0 && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto divide-y divide-gray-100">
+          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-md shadow-lg max-h-56 overflow-y-auto divide-y divide-neutral-100">
             {searchResults.map((res) => (
               <div
                 key={res.id}
                 onClick={() => handleSelectResult(res)}
-                className="px-3 py-2 text-xs hover:bg-indigo-50 cursor-pointer flex items-start gap-2 text-gray-800 transition"
+                className="px-3 py-2 text-xs hover:bg-primary-100 cursor-pointer flex items-start gap-2 text-neutral-800 transition"
               >
-                <MapPin className="h-4 w-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="h-4 w-4 text-primary-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-gray-900">{res.text}</p>
-                  <p className="text-gray-500 line-clamp-1">{res.place_name}</p>
+                  <p className="font-semibold text-neutral-900">{res.text}</p>
+                  <p className="text-neutral-500 line-clamp-1">{res.place_name}</p>
                 </div>
               </div>
             ))}
@@ -463,21 +463,21 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
 
       {/* 2. Interactive Mapbox Container & Style Selector */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="flex items-center gap-1 font-medium text-gray-700">
-            <Navigation className="h-3.5 w-3.5 text-indigo-600" /> Interactive Map Pin Selector
+        <div className="flex items-center justify-between text-xs text-neutral-500">
+          <span className="flex items-center gap-1 font-medium text-neutral-700">
+            <Navigation className="h-3.5 w-3.5 text-primary-500" /> Interactive Map Pin Selector
           </span>
 
           {/* Map Layer Switcher (Streets, Satellite Hybrid, Outdoors) */}
-          <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-md border border-gray-200">
-            <span className="text-[10px] text-gray-400 font-semibold px-1 flex items-center gap-0.5">
+          <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-md border border-neutral-200">
+            <span className="text-[10px] text-neutral-400 font-semibold px-1 flex items-center gap-0.5">
               <Layers className="h-3 w-3" /> Layer:
             </span>
             <button
               type="button"
               onClick={() => handleStyleChange("streets")}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "streets" ? "bg-white text-indigo-600 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                mapStyle === "streets" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
               }`}
             >
               Streets
@@ -486,7 +486,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
               type="button"
               onClick={() => handleStyleChange("satellite")}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "satellite" ? "bg-white text-indigo-600 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                mapStyle === "satellite" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
               }`}
             >
               Satellite Hybrid
@@ -495,7 +495,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
               type="button"
               onClick={() => handleStyleChange("outdoors")}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "outdoors" ? "bg-white text-indigo-600 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                mapStyle === "outdoors" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
               }`}
             >
               Outdoors
@@ -504,13 +504,13 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
         </div>
         <div
           ref={mapContainerRef}
-          className="h-64 sm:h-72 w-full min-h-[250px] rounded-lg border border-gray-300 shadow-inner overflow-hidden relative"
+          className="h-64 sm:h-72 w-full min-h-[250px] rounded-lg border border-neutral-300 shadow-inner overflow-hidden relative"
         />
       </div>
 
       {/* 3. Address / Location Input Field */}
       <div>
-        <label htmlFor="mapbox-location-address" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="mapbox-location-address" className="block text-sm font-medium text-neutral-700 mb-1">
           Location Address
         </label>
         <div className="relative">
@@ -521,30 +521,30 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
             value={location}
             onChange={(e) => onLocationChange(e.target.value)}
             placeholder="Selected address will appear here..."
-            className="w-full pl-9 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+            className="w-full pl-9 py-2 border border-neutral-300 rounded-md text-sm text-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-neutral-50/50"
           />
           <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-red-500" />
         </div>
       </div>
 
       {/* 4. Derived Coordinates Display */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-md border border-slate-200 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-neutral-50 p-3 rounded-md border border-neutral-200 text-xs">
         <div>
-          <label className="block text-slate-500 font-medium mb-1">Derived Latitude</label>
+          <label className="block text-neutral-500 font-medium mb-1">Derived Latitude</label>
           <input
             type="text"
             readOnly
             value={typeof latitude === "number" ? latitude.toFixed(6) : "Pin location to derive"}
-            className="w-full px-2.5 py-1.5 bg-white border rounded font-mono text-slate-800 font-bold cursor-not-allowed text-xs"
+            className="w-full px-2.5 py-1.5 bg-white border border-neutral-300 rounded font-mono text-neutral-800 font-bold cursor-not-allowed text-xs"
           />
         </div>
         <div>
-          <label className="block text-slate-500 font-medium mb-1">Derived Longitude</label>
+          <label className="block text-neutral-500 font-medium mb-1">Derived Longitude</label>
           <input
             type="text"
             readOnly
             value={typeof longitude === "number" ? longitude.toFixed(6) : "Pin location to derive"}
-            className="w-full px-2.5 py-1.5 bg-white border rounded font-mono text-slate-800 font-bold cursor-not-allowed text-xs"
+            className="w-full px-2.5 py-1.5 bg-white border border-neutral-300 rounded font-mono text-neutral-800 font-bold cursor-not-allowed text-xs"
           />
         </div>
       </div>

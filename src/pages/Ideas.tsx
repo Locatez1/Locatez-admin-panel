@@ -13,6 +13,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { CustomSelect } from "../components/common/CustomSelect";
 import {
   Lightbulb,
   Plus,
@@ -26,6 +27,8 @@ import {
   AlertTriangle,
   RefreshCw,
   Tag,
+  X,
+  RotateCcw,
 } from "lucide-react";
 
 export const Ideas: React.FC = () => {
@@ -283,7 +286,7 @@ export const Ideas: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 flex items-center gap-2">
-            <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0" /> Ideas Management
+            <Lightbulb className="h-6 w-6 text-primary flex-shrink-0" /> Ideas Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-500">
             Create, search, filter, edit, and manage video request idea suggestions.
@@ -294,47 +297,114 @@ export const Ideas: React.FC = () => {
         </Button>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-xs flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        {/* Search Query Input */}
-        <div className="relative flex-1 min-w-[200px]">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-gray-400" />
+      {/* Filter & Search Card */}
+      <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
+            <Filter className="h-4 w-4 text-primary-500" />
+            <span>Filter & Search Ideas</span>
+            {(searchQuery || selectedCategoryFilter) && (
+              <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                Active
+              </span>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Search ideas by title, place, city..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-          />
+          <div className="flex items-center gap-3">
+            {(searchQuery || selectedCategoryFilter) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategoryFilter("");
+                }}
+                className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset Filters
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={fetchIdeas}
+              className="p-1.5 text-neutral-500 hover:text-primary-600 hover:bg-neutral-100 rounded-lg transition cursor-pointer"
+              title="Refresh Ideas"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-primary-500" : ""}`} />
+            </button>
+          </div>
         </div>
 
-        {/* Category Dropdown Filter */}
-        <div className="flex items-center gap-2 sm:w-64">
-          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            value={selectedCategoryFilter}
-            onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-            className="block w-full py-2 px-3 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+          {/* Search Query Input */}
+          <div className="relative sm:col-span-7">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search ideas by title, place, city..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full pl-9 pr-8 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder-neutral-400 bg-neutral-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Category Dropdown Filter */}
+          <div className="sm:col-span-5">
+            <CustomSelect
+              icon={<Tag className="h-4 w-4" />}
+              value={selectedCategoryFilter}
+              onChange={setSelectedCategoryFilter}
+              placeholder="All Categories"
+              options={[
+                { label: "All Categories", value: "" },
+                ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+              ]}
+            />
+          </div>
         </div>
 
-        {/* Refresh Button */}
-        <button
-          onClick={fetchIdeas}
-          className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md border border-gray-300 transition"
-          title="Refresh ideas list"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-        </button>
+        {/* Category Pill Quick Filter */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+            <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Category:</span>
+            <button
+              type="button"
+              onClick={() => setSelectedCategoryFilter("")}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                !selectedCategoryFilter
+                  ? "bg-primary-500 text-white shadow-2xs"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => {
+              const isActive = selectedCategoryFilter === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategoryFilter(cat.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-primary-500 text-white shadow-2xs"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Main Table / Content List */}
@@ -516,23 +586,14 @@ export const Ideas: React.FC = () => {
             <label htmlFor="create-idea-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
-            <select
-              id="create-idea-category"
-              required
+            <CustomSelect
+              icon={<Tag className="h-4 w-4" />}
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={setCategoryId}
+              placeholder="Select a category"
               disabled={actionLoading}
-              className="block w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary bg-white"
-            >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              options={categories.map((cat) => ({ label: cat.name, value: cat.id }))}
+            />
           </div>
 
           {/* Content / Description */}
@@ -663,20 +724,14 @@ export const Ideas: React.FC = () => {
             <label htmlFor="edit-idea-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
-            <select
-              id="edit-idea-category"
-              required
+            <CustomSelect
+              icon={<Tag className="h-4 w-4" />}
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={setCategoryId}
+              placeholder="Select a category"
               disabled={actionLoading}
-              className="block w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary bg-white"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              options={categories.map((cat) => ({ label: cat.name, value: cat.id }))}
+            />
           </div>
 
           {/* Content / Description */}

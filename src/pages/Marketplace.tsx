@@ -14,6 +14,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { CustomSelect } from "../components/common/CustomSelect";
 import { MapboxLocationPicker } from "../components/common/MapboxLocationPicker";
 import { Pagination } from "../components/common/Pagination";
 import { useToast } from "../context/ToastContext";
@@ -35,6 +36,10 @@ import {
   Check,
   X,
   AlertTriangle,
+  Filter,
+  RotateCcw,
+  Tag,
+  ArrowUpDown,
 } from "lucide-react";
 
 export const Marketplace: React.FC = () => {
@@ -367,16 +372,18 @@ export const Marketplace: React.FC = () => {
     switch (st?.toUpperCase()) {
       case "PUBLISHED":
       case "LIVE":
-        return <Badge variant="success">PUBLISHED</Badge>;
+        return <Badge variant="success">{st}</Badge>;
       case "PENDING":
         return <Badge variant="warning">PENDING</Badge>;
       case "DRAFT":
-        return <Badge variant="default">DRAFT</Badge>;
+        return <Badge variant="info">DRAFT</Badge>;
       case "EXPIRED":
-        return <Badge variant="warning">EXPIRED</Badge>;
+        return <Badge variant="cancelled">EXPIRED</Badge>;
       case "CANCELLED":
       case "ENDED":
-        return <Badge variant="danger">{st}</Badge>;
+        return <Badge variant="cancelled">{st}</Badge>;
+      case "REJECTED":
+        return <Badge variant="danger">REJECTED</Badge>;
       default:
         return <Badge>{st}</Badge>;
     }
@@ -399,7 +406,7 @@ export const Marketplace: React.FC = () => {
             Manage Video-On-Demand (VOD) marketplace streams, moderate pending restricted-area listings, and inspect sales.
           </p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="self-start sm:self-auto flex items-center gap-1.5 shrink-0 bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => setIsCreateModalOpen(true)} className="self-start sm:self-auto flex items-center gap-1.5 shrink-0 border-transparent">
           <Plus className="h-4 w-4" /> Add Marketplace VOD
         </Button>
       </div>
@@ -407,7 +414,7 @@ export const Marketplace: React.FC = () => {
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="p-3 bg-primary-100 rounded-lg text-primary-700">
             <Film className="h-5 w-5" />
           </div>
           <div>
@@ -417,17 +424,17 @@ export const Marketplace: React.FC = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center gap-3">
-          <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
+          <div className="p-3 bg-yellow-50 border border-yellow-500/20 rounded-lg text-yellow-900">
             <Clock className="h-5 w-5" />
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Pending Approval</p>
-            <p className="text-lg font-bold text-amber-600">{pendingCount}</p>
+            <p className="text-lg font-bold text-yellow-900">{pendingCount}</p>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center gap-3">
-          <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+          <div className="p-3 bg-green-50 border border-green-500/20 rounded-lg text-green-900">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
@@ -439,7 +446,7 @@ export const Marketplace: React.FC = () => {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center gap-3">
-          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+          <div className="p-3 bg-primary-100 rounded-lg text-primary-800">
             <ShoppingBag className="h-5 w-5" />
           </div>
           <div>
@@ -486,68 +493,133 @@ export const Marketplace: React.FC = () => {
       {/* TAB 1: VOD LISTINGS */}
       {activeTab === "streams" && (
         <div className="space-y-4">
-          {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search listings by title, location, or description..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
+          {/* Styled Filters Container Card */}
+          <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+              <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
+                <Filter className="h-4 w-4 text-primary-500" />
+                <span>Search & Filter Listings</span>
+                {(search || categoryFilter || statusFilter || sortFilter !== "newest") && (
+                  <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                    Active
+                  </span>
+                )}
+              </div>
+              {(search || categoryFilter || statusFilter || sortFilter !== "newest") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setCategoryFilter("");
+                    setStatusFilter("");
+                    setSortFilter("newest");
+                    setPage(1);
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset Filters
+                </button>
+              )}
             </div>
 
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full sm:w-44 border border-gray-300 rounded-md py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+              {/* Search Bar */}
+              <div className="relative sm:col-span-6">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="Search listings by title, location, or description..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-9 pr-8 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder-neutral-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none bg-neutral-50/50 hover:bg-white focus:bg-white transition"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch("");
+                      setPage(1);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full sm:w-40 border border-gray-300 rounded-md py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="">All Statuses</option>
-              <option value="PENDING">PENDING (Approval)</option>
-              <option value="PUBLISHED">PUBLISHED</option>
-              <option value="DRAFT">DRAFT</option>
-              <option value="ENDED">ENDED</option>
-              <option value="EXPIRED">EXPIRED</option>
-              <option value="CANCELLED">CANCELLED</option>
-            </select>
+              {/* Category Filter */}
+              <div className="sm:col-span-3">
+                <CustomSelect
+                  icon={<Tag className="h-4 w-4" />}
+                  value={categoryFilter}
+                  onChange={(val) => {
+                    setCategoryFilter(val);
+                    setPage(1);
+                  }}
+                  placeholder="All Categories"
+                  options={[
+                    { label: "All Categories", value: "" },
+                    ...categories.map((c) => ({ label: c.name, value: c.id })),
+                  ]}
+                />
+              </div>
 
-            <select
-              value={sortFilter}
-              onChange={(e) => {
-                setSortFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full sm:w-40 border border-gray-300 rounded-md py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="highest_price">Highest Price</option>
-              <option value="lowest_price">Lowest Price</option>
-            </select>
+              {/* Sort Filter */}
+              <div className="sm:col-span-3">
+                <CustomSelect
+                  icon={<ArrowUpDown className="h-4 w-4" />}
+                  value={sortFilter}
+                  onChange={(val) => {
+                    setSortFilter(val);
+                    setPage(1);
+                  }}
+                  placeholder="Sort by"
+                  options={[
+                    { label: "Newest First", value: "newest" },
+                    { label: "Oldest First", value: "oldest" },
+                    { label: "Highest Price", value: "highest_price" },
+                    { label: "Lowest Price", value: "lowest_price" },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* Status Pill Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+              <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Status:</span>
+              {[
+                { label: "All Statuses", value: "" },
+                { label: "Pending Review", value: "PENDING" },
+                { label: "Published", value: "PUBLISHED" },
+                { label: "Draft", value: "DRAFT" },
+                { label: "Ended", value: "ENDED" },
+                { label: "Expired", value: "EXPIRED" },
+                { label: "Cancelled", value: "CANCELLED" },
+              ].map((st) => {
+                const isActive = statusFilter.toUpperCase() === st.value.toUpperCase();
+                return (
+                  <button
+                    key={st.value}
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(st.value);
+                      setPage(1);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "bg-primary-500 text-white shadow-2xs"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Listings Table / Empty State / Loader */}
@@ -890,20 +962,17 @@ export const Marketplace: React.FC = () => {
             <label htmlFor="create-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
-            <select
-              id="create-category"
-              className="block w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-indigo-600 focus:outline-none"
+            <CustomSelect
+              icon={<Tag className="h-4 w-4" />}
               value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              onChange={setSelectedCategoryId}
+              placeholder="Select Category (Optional)"
               disabled={actionLoading}
-            >
-              <option value="">Select Category (Optional)</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { label: "Select Category (Optional)", value: "" },
+                ...categories.map((c) => ({ label: c.name, value: c.id })),
+              ]}
+            />
           </div>
 
           {/* Map Location Selector */}
@@ -932,16 +1001,15 @@ export const Marketplace: React.FC = () => {
               <label htmlFor="create-status" className="block text-sm font-medium text-gray-700 mb-1">
                 Status
               </label>
-              <select
-                id="create-status"
-                className="block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-indigo-600 focus:outline-none"
+              <CustomSelect
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={setStatus}
                 disabled={actionLoading}
-              >
-                <option value="PUBLISHED">PUBLISHED</option>
-                <option value="DRAFT">DRAFT</option>
-              </select>
+                options={[
+                  { label: "PUBLISHED", value: "PUBLISHED" },
+                  { label: "DRAFT", value: "DRAFT" },
+                ]}
+              />
             </div>
           </div>
 

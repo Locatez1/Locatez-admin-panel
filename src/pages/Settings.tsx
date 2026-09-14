@@ -743,21 +743,35 @@ export const Settings: React.FC = () => {
                           No service areas configured on server.
                         </p>
                       ) : (
-                        <div className="divide-y divide-gray-200 border rounded-lg overflow-hidden bg-white">
+                        <div className="space-y-2">
                           {pendingAreas.map((area) => (
-                            <div key={area.id} className="p-4 flex items-center justify-between gap-4 hover:bg-gray-50/50 transition">
+                            <div
+                              key={area.id}
+                              className={`p-4 flex items-center justify-between gap-4 rounded-xl border transition-all duration-150 ${
+                                area.enabled
+                                  ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/40 shadow-2xs"
+                                  : "bg-white border-neutral-200 hover:bg-neutral-50/50"
+                              }`}
+                            >
                               <div className="flex items-center gap-3">
-                                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                                <MapPin className={`h-4 w-4 shrink-0 ${area.enabled ? "text-primary-600" : "text-neutral-400"}`} />
                                 <div>
-                                  <p className="font-semibold text-sm text-gray-900">{area.name}</p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="font-semibold text-sm text-neutral-900 flex items-center gap-2">
+                                    <span>{area.name}</span>
+                                    {area.enabled && (
+                                      <span className="text-[10px] bg-primary-100 text-primary-900 font-semibold px-2 py-0.2 rounded-full border border-primary-300">
+                                        Active Area
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-neutral-500">
                                     {area.countryCode === "IN" ? "India" : area.countryCode}
                                   </p>
                                 </div>
                               </div>
 
                               <div className="flex items-center gap-3">
-                                <span className={`text-xs font-medium ${area.enabled ? "text-green-700" : "text-gray-400"}`}>
+                                <span className={`text-xs font-semibold ${area.enabled ? "text-green-800" : "text-neutral-400"}`}>
                                   {area.enabled ? "Enabled" : "Disabled"}
                                 </span>
                                 <Switch
@@ -807,54 +821,78 @@ export const Settings: React.FC = () => {
 
             {/* Setting Content */}
             <div className="p-6 space-y-6">
-              <div className="flex items-start justify-between gap-6">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="video-approval-switch"
-                    className="text-base font-medium text-gray-900 cursor-pointer"
-                  >
-                    Require approval for creating any video request
-                  </label>
-                  <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                    {requireApproval
-                      ? "All valid video requests require moderator/admin approval before becoming available. Hard-restricted locations remain blocked."
-                      : "Normal video requests are created immediately. Conditionally restricted locations require moderator approval. Hard-restricted locations remain blocked."}
-                  </p>
-                  {!isAdmin && (
-                    <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded inline-block font-medium mt-2">
-                      Note: As a Moderator, you can view this setting but cannot modify it.
+              <div className={`p-4 rounded-xl border transition-all duration-200 ${requireApproval ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/50 shadow-xs" : "bg-white border-neutral-200"}`}>
+                <div className="flex items-start justify-between gap-6">
+                  <div className="space-y-1">
+                    <label
+                      htmlFor="video-approval-switch"
+                      className="text-base font-medium text-neutral-900 cursor-pointer flex items-center gap-2"
+                    >
+                      <span>Require approval for creating any video request</span>
+                      {requireApproval && (
+                        <span className="text-xs bg-primary-100 text-primary-900 font-semibold px-2 py-0.5 rounded-full border border-primary-300">
+                          Active
+                        </span>
+                      )}
+                    </label>
+                    <p className="text-sm text-neutral-600 leading-relaxed max-w-2xl">
+                      {requireApproval
+                        ? "All valid video requests require moderator/admin approval before becoming available. Hard-restricted locations remain blocked."
+                        : "Normal video requests are created immediately. Conditionally restricted locations require moderator approval. Hard-restricted locations remain blocked."}
                     </p>
-                  )}
-                </div>
+                    {!isAdmin && (
+                      <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded inline-block font-medium mt-2">
+                        Note: As a Moderator, you can view this setting but cannot modify it.
+                      </p>
+                    )}
+                  </div>
 
-                <div className="flex items-center pt-1">
-                  <Switch
-                    id="video-approval-switch"
-                    checked={requireApproval}
-                    onChange={handleToggleClick}
-                    disabled={!isAdmin || actionLoading}
-                    label="Require approval for creating any video request"
-                  />
+                  <div className="flex items-center pt-1">
+                    <Switch
+                      id="video-approval-switch"
+                      checked={requireApproval}
+                      onChange={handleToggleClick}
+                      disabled={!isAdmin || actionLoading}
+                      label="Require approval for creating any video request"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Clarification Box / Matrix Card */}
-              <div className="rounded-lg bg-blue-50/70 p-4 border border-blue-200/80 space-y-3">
-                <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
-                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+              <div className="rounded-xl bg-primary-100/30 p-4 border border-primary-200/60 space-y-3">
+                <div className="flex items-center gap-2 text-primary-950 font-semibold text-sm">
+                  <Info className="h-4.5 w-4.5 text-primary-600 flex-shrink-0" />
                   <span>Restriction Policy & Approval Matrix</span>
                 </div>
-                <p className="text-xs text-blue-800 leading-normal">
+                <p className="text-xs text-primary-900 leading-normal">
                   This switch specifically controls approval requirements for <strong>otherwise-valid video requests</strong>. It does not override or allow hard-restricted locations.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
-                    <div className="font-semibold text-gray-900 flex items-center justify-between">
-                      <span>When Switch is OFF:</span>
-                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-normal">Default</span>
+                  {/* Card 1: Switch OFF (Default Mode) */}
+                  <div
+                    className={`p-3.5 rounded-xl border transition-all duration-200 ${
+                      !requireApproval
+                        ? "bg-white border-2 border-primary-500 ring-2 ring-primary-500/20 shadow-md transform scale-[1.01]"
+                        : "bg-white/60 border-neutral-200 text-neutral-500 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="font-semibold flex items-center justify-between mb-2">
+                      <span className={!requireApproval ? "text-neutral-900 font-bold" : "text-neutral-600"}>
+                        When Switch is OFF:
+                      </span>
+                      {!requireApproval ? (
+                        <span className="px-2 py-0.5 rounded-full bg-primary-500 text-white font-bold text-[10px] flex items-center gap-1 shadow-2xs">
+                          <CheckCircle2 className="h-3 w-3" /> Active Policy
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600 font-medium text-[10px]">
+                          Default Mode
+                        </span>
+                      )}
                     </div>
-                    <ul className="space-y-1 text-gray-700">
+                    <ul className="space-y-1.5 text-neutral-700">
                       <li className="flex items-center gap-1.5">
                         <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
                         <span><strong>HARD:</strong> Blocked</span>
@@ -864,18 +902,35 @@ export const Settings: React.FC = () => {
                         <span><strong>CONDITIONAL:</strong> Moderator approval</span>
                       </li>
                       <li className="flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
                         <span><strong>NORMAL:</strong> Created normally</span>
                       </li>
                     </ul>
                   </div>
 
-                  <div className="bg-white p-3 rounded border border-blue-100 space-y-1.5 shadow-xs">
-                    <div className="font-semibold text-gray-900 flex items-center justify-between">
-                      <span>When Switch is ON:</span>
-                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-normal">Strict</span>
+                  {/* Card 2: Switch ON (Strict Mode) */}
+                  <div
+                    className={`p-3.5 rounded-xl border transition-all duration-200 ${
+                      requireApproval
+                        ? "bg-white border-2 border-primary-500 ring-2 ring-primary-500/20 shadow-md transform scale-[1.01]"
+                        : "bg-white/60 border-neutral-200 text-neutral-500 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="font-semibold flex items-center justify-between mb-2">
+                      <span className={requireApproval ? "text-neutral-900 font-bold" : "text-neutral-600"}>
+                        When Switch is ON:
+                      </span>
+                      {requireApproval ? (
+                        <span className="px-2 py-0.5 rounded-full bg-primary-500 text-white font-bold text-[10px] flex items-center gap-1 shadow-2xs">
+                          <CheckCircle2 className="h-3 w-3" /> Active Policy
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600 font-medium text-[10px]">
+                          Strict Mode
+                        </span>
+                      )}
                     </div>
-                    <ul className="space-y-1 text-gray-700">
+                    <ul className="space-y-1.5 text-neutral-700">
                       <li className="flex items-center gap-1.5">
                         <XCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
                         <span><strong>HARD:</strong> Blocked</span>
@@ -893,28 +948,35 @@ export const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-start justify-between gap-6 border-t border-gray-100 pt-6">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="media-approval-switch"
-                    className="text-base font-medium text-gray-900 cursor-pointer"
-                  >
-                    Require approval for fulfilment media
-                  </label>
-                  <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                    {requireMediaApproval
-                      ? "Submitted video/image goes to moderators first. Requesters only see media after approval."
-                      : "Submitted video/image is delivered directly to the requester (still stored for admin review of completed requests)."}
-                  </p>
-                </div>
-                <div className="flex items-center pt-1">
-                  <Switch
-                    id="media-approval-switch"
-                    checked={requireMediaApproval}
-                    onChange={handleMediaApprovalToggle}
-                    disabled={!isAdmin || actionLoading}
-                    label="Require approval for fulfilment media"
-                  />
+              <div className={`p-4 rounded-xl border transition-all duration-200 ${requireMediaApproval ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/50 shadow-xs" : "bg-white border-neutral-200"}`}>
+                <div className="flex items-start justify-between gap-6">
+                  <div className="space-y-1">
+                    <label
+                      htmlFor="media-approval-switch"
+                      className="text-base font-medium text-neutral-900 cursor-pointer flex items-center gap-2"
+                    >
+                      <span>Require approval for fulfilment media</span>
+                      {requireMediaApproval && (
+                        <span className="text-xs bg-primary-100 text-primary-900 font-semibold px-2 py-0.5 rounded-full border border-primary-300">
+                          Active
+                        </span>
+                      )}
+                    </label>
+                    <p className="text-sm text-neutral-600 leading-relaxed max-w-2xl">
+                      {requireMediaApproval
+                        ? "Submitted video/image goes to moderators first. Requesters only see media after approval."
+                        : "Submitted video/image is delivered directly to the requester (still stored for admin review of completed requests)."}
+                    </p>
+                  </div>
+                  <div className="flex items-center pt-1">
+                    <Switch
+                      id="media-approval-switch"
+                      checked={requireMediaApproval}
+                      onChange={handleMediaApprovalToggle}
+                      disabled={!isAdmin || actionLoading}
+                      label="Require approval for fulfilment media"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1074,10 +1136,17 @@ export const Settings: React.FC = () => {
                   <strong>marketplace</strong> listings. Ideas and popular places are never deleted.
                 </p>
 
-                <div className="flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-3">
+                <div className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3.5 transition-all duration-200 ${mediaCleanupEnabled ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/50 shadow-xs" : "bg-white border-neutral-200"}`}>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Enable nightly cleanup</p>
-                    <p className="text-xs text-gray-500">Admin-controlled on/off for the IST midnight job.</p>
+                    <p className="text-sm font-medium text-neutral-900 flex items-center gap-2">
+                      <span>Enable nightly cleanup</span>
+                      {mediaCleanupEnabled && (
+                        <span className="text-xs bg-primary-100 text-primary-900 font-semibold px-2 py-0.5 rounded-full border border-primary-300">
+                          Active
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-neutral-500">Admin-controlled on/off for the IST midnight job.</p>
                   </div>
                   <Switch
                     checked={mediaCleanupEnabled}
@@ -1139,10 +1208,17 @@ export const Settings: React.FC = () => {
                 <p className="text-sm text-gray-600">
                   Credit new USER accounts on registration (password, OTP, Firebase, or admin create).
                 </p>
-                <div className="flex items-center justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-3">
+                <div className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3.5 transition-all duration-200 ${welcomeBonusEnabled ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/50 shadow-xs" : "bg-white border-neutral-200"}`}>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Enable welcome bonus</p>
-                    <p className="text-xs text-gray-500">When off, new users get a wallet with ₹0 credit.</p>
+                    <p className="text-sm font-medium text-neutral-900 flex items-center gap-2">
+                      <span>Enable welcome bonus</span>
+                      {welcomeBonusEnabled && (
+                        <span className="text-xs bg-primary-100 text-primary-900 font-semibold px-2 py-0.5 rounded-full border border-primary-300">
+                          Active
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-neutral-500">When off, new users get a wallet with ₹0 credit.</p>
                   </div>
                   <Switch
                     checked={welcomeBonusEnabled}
@@ -1195,8 +1271,7 @@ export const Settings: React.FC = () => {
                   <h3 className="text-base font-medium text-gray-900">Dynamic copy words</h3>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Words used for rotating UI copy (e.g. explore, watch, see). Clients call{" "}
-                  <code className="text-xs bg-gray-100 px-1 rounded">GET /settings/dynamic-words</code>.
+                  Words used for rotating UI copy across client applications (e.g. explore, watch, see).
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {dynamicWords.map((word) => (

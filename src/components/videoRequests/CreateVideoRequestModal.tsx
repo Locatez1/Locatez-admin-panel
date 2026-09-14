@@ -247,8 +247,8 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Request">
       <form onSubmit={handleSubmit} className="space-y-4">
         {initialData?.address && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <div className="bg-primary-100 border border-primary-300 rounded-md p-3 text-xs text-primary-900 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <span>
               Pre-filled from Popular Place: <strong>{initialData.address}</strong>
             </span>
@@ -256,7 +256,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
         )}
 
         <div>
-          <span className="block text-sm font-medium text-gray-700 mb-2">Request type</span>
+          <span className="block text-sm font-medium text-neutral-700 mb-2">Request type</span>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -264,8 +264,8 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
               onClick={() => setRequestType("VIDEO")}
               className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                 requestType === "VIDEO"
-                  ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  ? "border-primary-500 bg-primary-100 text-primary-900 font-semibold shadow-xs"
+                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
               }`}
             >
               Video
@@ -276,8 +276,8 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
               onClick={() => setRequestType("IMAGE")}
               className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                 requestType === "IMAGE"
-                  ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  ? "border-primary-500 bg-primary-100 text-primary-900 font-semibold shadow-xs"
+                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
               }`}
             >
               Image
@@ -302,12 +302,12 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
 
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
-            <label htmlFor="req-desc" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="req-desc" className="block text-sm font-medium text-neutral-700">
               Description
             </label>
             <span
               className={`text-xs ${
-                descriptionReady ? "text-gray-500" : "text-amber-600"
+                descriptionReady ? "text-neutral-500" : "text-yellow-900 font-medium"
               }`}
             >
               {descriptionLength}/{DESCRIPTION_MIN_CHARS} min
@@ -318,7 +318,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
             rows={4}
             required
             minLength={DESCRIPTION_MIN_CHARS}
-            className="block w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="block w-full rounded-md border border-neutral-300 p-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 placeholder-neutral-400 disabled:bg-neutral-100 transition-colors"
             placeholder={
               requestType === "IMAGE"
                 ? "Describe the photos required in detail (min 100 characters)..."
@@ -329,7 +329,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
             disabled={loading}
           />
           {!descriptionReady && (
-            <p className="mt-1 text-xs text-amber-600">
+            <p className="mt-1 text-xs text-yellow-900 font-medium">
               Add at least {DESCRIPTION_MIN_CHARS - descriptionLength} more character
               {DESCRIPTION_MIN_CHARS - descriptionLength === 1 ? "" : "s"} before category
               recommendation runs.
@@ -337,24 +337,24 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           )}
         </div>
 
-        <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5">
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5">
           <div className="flex items-start gap-2">
-            <Tag className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
+            <Tag className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
             <div className="min-w-0 flex-1 text-sm">
-              <p className="font-medium text-gray-800">Category (auto from description)</p>
+              <p className="font-medium text-neutral-800">Category (auto from description)</p>
               {categoryLoading ? (
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Fetching recommendation…
                 </p>
               ) : suggestedCategory ? (
-                <p className="mt-1 text-xs text-gray-700">
-                  Attached: <strong>{suggestedCategory.name}</strong>
+                <p className="mt-1 text-xs text-neutral-700">
+                  Attached: <strong className="text-neutral-900">{suggestedCategory.name}</strong>
                 </p>
               ) : categoryError ? (
-                <p className="mt-1 text-xs text-red-600">{categoryError}</p>
+                <p className="mt-1 text-xs text-red-600 font-medium">{categoryError}</p>
               ) : (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-neutral-500">
                   Will call categories API after you pause typing (min {DESCRIPTION_MIN_CHARS}{" "}
                   characters).
                 </p>
@@ -364,7 +364,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
         </div>
 
         <div>
-          <span className="block text-sm font-medium text-gray-700 mb-2">Location</span>
+          <span className="block text-sm font-medium text-neutral-700 mb-2">Location</span>
           <MapboxLocationPicker
             location={address}
             onLocationChange={setAddress}
@@ -375,7 +375,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
               setLongitude(lng);
             }}
           />
-          <p className="mt-1.5 text-xs text-gray-500">
+          <p className="mt-1.5 text-xs text-neutral-500">
             Search or click the map to set the request pin. Address is filled from Mapbox when
             possible.
           </p>
@@ -426,7 +426,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           onChange={(e) => setRewardAmount(e.target.value ? parseFloat(e.target.value) : "")}
           disabled={loading}
         />
-        <p className="text-xs text-gray-500 -mt-2">
+        <p className="text-xs text-neutral-500 -mt-2">
           {settingsLoading ? (
             <span className="inline-flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -435,14 +435,14 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           ) : typeof activeMinReward === "number" ? (
             <>
               Minimum reward for {requestType === "IMAGE" ? "image" : "video"} requests:{" "}
-              <strong>₹{activeMinReward}</strong>
+              <strong className="text-neutral-800">₹{activeMinReward}</strong>
             </>
           ) : (
             "Minimum reward unavailable."
           )}
         </p>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t border-neutral-200">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
