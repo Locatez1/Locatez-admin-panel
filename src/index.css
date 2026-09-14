@@ -60,3 +60,12 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Hide WebKit native search input clear buttons (prevents double X icons with custom React clear buttons) */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
