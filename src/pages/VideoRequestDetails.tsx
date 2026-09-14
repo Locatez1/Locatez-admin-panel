@@ -305,6 +305,24 @@ export const VideoRequestDetails: React.FC = () => {
     return "This request is pending moderation to verify location safety, service area coverage, and guidelines compliance.";
   };
 
+  const getRejectionReasonText = (req: VideoRequest | null): string | null => {
+    if (!req) return null;
+    const reason =
+      req.rejectionReason ||
+      (req as any).rejectReason ||
+      (req as any).reason ||
+      (req as any).cancellationReason ||
+      (req as any).rejection_reason ||
+      (req as any).rejectedReason;
+    if (reason && typeof reason === "string" && reason.trim().length > 0) {
+      return reason.trim();
+    }
+    if (req.status === "REJECTED") {
+      return "No explicit rejection reason provided.";
+    }
+    return null;
+  };
+
   const getVideoUrl = (req: VideoRequest): string | null => {
     const f = req.fulfilment;
     if (f) {
@@ -528,19 +546,26 @@ export const VideoRequestDetails: React.FC = () => {
           </div>
         )}
 
-        {request.status === "REJECTED" && request.rejectionReason && (
+        {(request.status === "REJECTED" || getRejectionReasonText(request)) && (
           <div className="bg-red-50 border-y border-red-200 p-4">
-            <h3 className="text-sm font-medium text-red-800">Rejection Reason</h3>
-            <p className="mt-1 text-sm text-red-700">{request.rejectionReason}</p>
-            {request.reviewedBy && (
-              <p className="mt-2 text-xs text-red-600">
-                Rejected by{" "}
-                <strong>{request.reviewedBy.name || request.reviewedBy.username}</strong>
-                {request.reviewedAt
-                  ? ` · ${new Date(request.reviewedAt).toLocaleString()}`
-                  : ""}
-              </p>
-            )}
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-900">Request Rejection Reason</h3>
+                <p className="mt-1 text-sm text-red-800 font-medium">
+                  {getRejectionReasonText(request)}
+                </p>
+                {request.reviewedBy && (
+                  <p className="mt-2 text-xs text-red-600">
+                    Reviewed & Rejected by{" "}
+                    <strong>{request.reviewedBy.name || request.reviewedBy.username}</strong>
+                    {request.reviewedAt
+                      ? ` · ${new Date(request.reviewedAt).toLocaleString()}`
+                      : ""}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -568,6 +593,18 @@ export const VideoRequestDetails: React.FC = () => {
               <dt className="text-sm font-medium text-gray-500">Description</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{request.description || "No description provided."}</dd>
             </div>
+
+            {(request.status === "REJECTED" || getRejectionReasonText(request)) && (
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6 bg-red-50/60">
+                <dt className="text-sm font-semibold text-red-900 flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+                  Rejection Reason
+                </dt>
+                <dd className="mt-1 text-sm text-red-900 sm:col-span-2 sm:mt-0 font-medium">
+                  {getRejectionReasonText(request)}
+                </dd>
+              </div>
+            )}
 
             {/* Location Address */}
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6 bg-slate-50/50">

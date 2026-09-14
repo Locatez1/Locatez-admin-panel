@@ -86,12 +86,9 @@ export const Categories: React.FC = () => {
   };
 
   useEffect(() => {
-    if (activeTab === "categories") {
-      fetchCategories();
-    } else {
-      fetchSuggestions();
-    }
-  }, [activeTab]);
+    fetchCategories();
+    fetchSuggestions();
+  }, []);
 
   // 1. Create Category Handler (POST /api/v1/categories)
   const handleCreateCategory = async (e: React.FormEvent) => {
