@@ -8,6 +8,8 @@ import {
   uploadMedia,
 } from "../api/popularPlaces.api";
 import { PopularPlace } from "../types";
+import { useDebounce } from "../hooks/useDebounce";
+import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
@@ -23,12 +25,21 @@ import {
   MapPin,
   Loader2,
   AlertTriangle,
+  Search,
 } from "lucide-react";
 
 export const AdminPopularPlaces: React.FC = () => {
   const [places, setPlaces] = useState<PopularPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination & Search State
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -54,9 +65,60 @@ export const AdminPopularPlaces: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAdminPopularPlaces();
-      const list = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
-      setPlaces(list);
+      const params: any = { page, limit };
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch.trim();
+      }
+
+      const res = await getAdminPopularPlaces(params);
+      const rawData = res.data;
+      const resMeta = (res as any).meta;
+
+      let rawList: PopularPlace[] = [];
+      let serverTotal: number | undefined;
+      let serverTotalPages: number | undefined;
+
+      if (Array.isArray(rawData)) {
+        rawList = rawData;
+      } else if (rawData && Array.isArray((rawData as any).items)) {
+        rawList = (rawData as any).items;
+        serverTotal = (rawData as any).pagination?.total || (rawData as any).pagination?.totalItems;
+        serverTotalPages = (rawData as any).pagination?.totalPages;
+      }
+
+      if (resMeta?.total !== undefined) {
+        serverTotal = resMeta.total;
+      }
+      if (resMeta?.totalPages !== undefined) {
+        serverTotalPages = resMeta.totalPages;
+      }
+
+      // If search filter is active and backend doesn't filter, filter client-side
+      let filteredList = rawList;
+      if (debouncedSearch.trim() && serverTotal === undefined) {
+        const q = debouncedSearch.trim().toLowerCase();
+        filteredList = rawList.filter(
+          (p) =>
+            p.name?.toLowerCase().includes(q) ||
+            p.location?.toLowerCase().includes(q) ||
+            p.description?.toLowerCase().includes(q)
+        );
+      }
+
+      if (serverTotal !== undefined && serverTotalPages !== undefined) {
+        setPlaces(filteredList);
+        setTotal(serverTotal);
+        setTotalPages(serverTotalPages || 1);
+      } else {
+        // Fallback client-side pagination
+        const calcTotal = filteredList.length;
+        const calcTotalPages = Math.ceil(calcTotal / limit) || 1;
+        const paginatedList = filteredList.slice((page - 1) * limit, page * limit);
+
+        setPlaces(paginatedList);
+        setTotal(calcTotal);
+        setTotalPages(calcTotalPages);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Failed to load admin popular places");
     } finally {
@@ -66,7 +128,7 @@ export const AdminPopularPlaces: React.FC = () => {
 
   useEffect(() => {
     fetchPlaces();
-  }, []);
+  }, [page, limit, debouncedSearch]);
 
   const resetForm = () => {
     setName("");
@@ -303,6 +365,25 @@ export const AdminPopularPlaces: React.FC = () => {
         </Button>
       </div>
 
+      {/* Search Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+            placeholder="Search popular places..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+      </div>
+
       {/* Main Content Table */}
       {error ? (
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">{error}</div>
@@ -313,8 +394,10 @@ export const AdminPopularPlaces: React.FC = () => {
       ) : places.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500 space-y-3">
           <Compass className="h-10 w-10 mx-auto text-gray-400" />
-          <p className="text-base font-medium text-gray-900">No popular places configured</p>
-          <p className="text-xs">Click "Add Popular Place" above to create the first featured location.</p>
+          <p className="text-base font-medium text-gray-900">No popular places found</p>
+          <p className="text-xs">
+            {search ? "Try adjusting your search query." : "Click \"Add Popular Place\" above to create the first featured location."}
+          </p>
         </div>
       ) : (
         <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg bg-white">
@@ -408,6 +491,13 @@ export const AdminPopularPlaces: React.FC = () => {
               ))}
             </tbody>
           </table>
+          <Pagination
+            page={page}
+            limit={limit}
+            total={total}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
       )}
 
