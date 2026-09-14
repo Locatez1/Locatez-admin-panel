@@ -8,8 +8,12 @@ import {
 /**
  * User-facing active Popular Places feed (GET /api/v1/popular-places)
  */
-export const getPopularPlaces = async () => {
-  const response = await apiClient.get<{ success: boolean; data: PopularPlace[] }>("/popular-places");
+export const getPopularPlaces = async (params?: any) => {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: PopularPlace[] | { items: PopularPlace[]; pagination?: any };
+    meta?: any;
+  }>("/popular-places", { params });
   return response.data;
 };
 
@@ -17,10 +21,11 @@ export const getPopularPlaces = async () => {
  * Admin Popular Places list including active & inactive (GET /api/v1/admin/popular-places)
  */
 export const getAdminPopularPlaces = async (params?: any) => {
-  const response = await apiClient.get<{ success: boolean; data: PopularPlace[] | { items: PopularPlace[]; pagination?: any } }>(
-    "/admin/popular-places",
-    { params }
-  );
+  const response = await apiClient.get<{
+    success: boolean;
+    data: PopularPlace[] | { items: PopularPlace[]; pagination?: any };
+    meta?: any;
+  }>("/admin/popular-places", { params });
   return response.data;
 };
 
