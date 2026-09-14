@@ -40,7 +40,7 @@ export const PopularPlacesFeed: React.FC = () => {
   // Request Video Modal State
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestInitialData, setRequestInitialData] = useState<{
-    title: string;
+    title?: string;
     description: string;
     address: string;
     latitude: number;
@@ -130,7 +130,6 @@ export const PopularPlacesFeed: React.FC = () => {
   const handleOpenRequestVideo = (place: PopularPlace, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setRequestInitialData({
-      title: `Live check at ${place.name}`,
       description: place.description || `Requesting live video verification at ${place.name}, ${place.location}`,
       address: place.location,
       latitude: place.latitude,
