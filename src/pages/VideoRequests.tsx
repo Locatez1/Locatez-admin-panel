@@ -10,7 +10,8 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
-import { Eye, AlertTriangle, Plus, MessageSquare, Film, Filter } from "lucide-react";
+import { Eye, AlertTriangle, Plus, MessageSquare, Film, Filter, Search, X, RotateCcw } from "lucide-react";
+import { useDebounce } from "../hooks/useDebounce";
 
 export const VideoRequests: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +27,9 @@ export const VideoRequests: React.FC = () => {
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const statusFilter = searchParams.get("status") || "";
+  const initialSearchParam = searchParams.get("search") || "";
+  const [search, setSearch] = useState(initialSearchParam);
+  const debouncedSearch = useDebounce(search, 400);
   const limit = 10;
 
   const [total, setTotal] = useState(0);
@@ -50,6 +54,23 @@ export const VideoRequests: React.FC = () => {
     setSearchParams(nextParams);
   };
 
+  const handleSearchChange = (val: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("page", "1");
+    if (val.trim()) {
+      nextParams.set("search", val.trim());
+    } else {
+      nextParams.delete("search");
+    }
+    setSearchParams(nextParams);
+  };
+
+  const handleResetFilters = () => {
+    setSearch("");
+    const nextParams = new URLSearchParams();
+    setSearchParams(nextParams);
+  };
+
   const fetchPendingMedia = async () => {
     setPendingMediaLoading(true);
     setPendingMediaError(null);
@@ -71,12 +92,27 @@ export const VideoRequests: React.FC = () => {
     try {
       const params: any = { page, limit };
       if (statusFilter) params.status = statusFilter;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
       const response = await getVideoRequests(params);
       const resData = response.data as any;
-      setRequests(Array.isArray(resData) ? resData : resData?.items || []);
-      setTotal(resData?.pagination?.total || resData?.meta?.total || 0);
-      setTotalPages(resData?.pagination?.totalPages || resData?.meta?.totalPages || 1);
+      let rawList: VideoRequest[] = Array.isArray(resData) ? resData : resData?.items || [];
+
+      // Fallback client-side filtering if search is active and backend returned unfiltered array
+      if (debouncedSearch.trim()) {
+        const q = debouncedSearch.trim().toLowerCase();
+        rawList = rawList.filter(
+          (req) =>
+            req.title?.toLowerCase().includes(q) ||
+            req.description?.toLowerCase().includes(q) ||
+            req.customLocation?.address?.toLowerCase().includes(q) ||
+            req.category?.name?.toLowerCase().includes(q)
+        );
+      }
+
+      setRequests(rawList);
+      setTotal(resData?.pagination?.total || resData?.meta?.total || rawList.length);
+      setTotalPages(resData?.pagination?.totalPages || resData?.meta?.totalPages || Math.ceil(rawList.length / limit) || 1);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Failed to fetch video requests");
     } finally {
@@ -86,7 +122,7 @@ export const VideoRequests: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [page, limit, statusFilter]);
+  }, [page, limit, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchPendingMedia();
@@ -224,19 +260,55 @@ export const VideoRequests: React.FC = () => {
         </div>
       </div>
 
-      {/* Status Filter Container & Tabs */}
-      <div className="bg-white p-3 sm:p-4 rounded-xl border border-neutral-200 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 text-neutral-700 text-xs font-semibold uppercase tracking-wider">
+      {/* Search & Status Filter Container */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
+          <div className="flex items-center gap-2 text-neutral-700 text-xs font-bold uppercase tracking-wider">
             <Filter className="h-4 w-4 text-primary-500" />
-            <span>Filter Status</span>
+            <span>Search & Status Filters</span>
+            {(statusFilter || search) && (
+              <span className="bg-primary-50 text-primary-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+                Active
+              </span>
+            )}
           </div>
-          {statusFilter && (
+          {(statusFilter || search) && (
             <button
-              onClick={() => handleStatusFilterChange("")}
-              className="text-xs text-primary-600 hover:text-primary-800 font-medium transition cursor-pointer"
+              type="button"
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
             >
-              Clear Filter
+              <RotateCcw className="h-3 w-3" />
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        {/* Search Bar Input */}
+        <div className="relative w-full">
+          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+            <Search className="h-4 w-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search requests by title, description, address, category..."
+            className="block w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-neutral-50/50 hover:bg-white focus:bg-white transition"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              handleSearchChange(e.target.value);
+            }}
+          />
+          {search && (
+            <button
+              type="button"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 rounded-full"
+              onClick={() => {
+                setSearch("");
+                handleSearchChange("");
+              }}
+            >
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
