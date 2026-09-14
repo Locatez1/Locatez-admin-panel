@@ -52,6 +52,7 @@ export const Settings: React.FC = () => {
   const [welcomeBonusSaving, setWelcomeBonusSaving] = useState(false);
   const [welcomeBonusError, setWelcomeBonusError] = useState<string | null>(null);
   const [dynamicWords, setDynamicWords] = useState<string[]>([]);
+  const [confirmedDynamicWords, setConfirmedDynamicWords] = useState<string[]>([]);
   const [newDynamicWord, setNewDynamicWord] = useState("");
   const [dynamicWordsSaving, setDynamicWordsSaving] = useState(false);
   const [dynamicWordsError, setDynamicWordsError] = useState<string | null>(null);
@@ -121,7 +122,9 @@ export const Settings: React.FC = () => {
         setConfirmedWelcomeBonusAmount(economyData.welcomeBonusAmount);
         setWelcomeBonusAmountInput(String(economyData.welcomeBonusAmount));
       }
-      setDynamicWords(Array.isArray(wordsData) ? wordsData : []);
+      const wordsList = Array.isArray(wordsData) ? wordsData : [];
+      setDynamicWords(wordsList);
+      setConfirmedDynamicWords(wordsList);
       setDynamicWordsError(null);
 
       const limit = typeof chatData.preAcceptanceMessageLimit === "number"
@@ -483,6 +486,7 @@ export const Settings: React.FC = () => {
     try {
       const saved = await updateDynamicCopyWords(dynamicWords);
       setDynamicWords(saved);
+      setConfirmedDynamicWords(saved);
       setDynamicWordsError(null);
       toast.success("Dynamic words saved.");
     } catch (err: any) {
@@ -1321,7 +1325,12 @@ export const Settings: React.FC = () => {
                       type="button"
                       size="sm"
                       isLoading={dynamicWordsSaving}
-                      disabled={dynamicWordsSaving || dynamicWords.length === 0}
+                      disabled={
+                        dynamicWordsSaving ||
+                        dynamicWords.length === 0 ||
+                        (dynamicWords.length === confirmedDynamicWords.length &&
+                          dynamicWords.every((w, i) => w === confirmedDynamicWords[i]))
+                      }
                       onClick={handleSaveDynamicWords}
                     >
                       Save words

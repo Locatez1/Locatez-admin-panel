@@ -266,99 +266,101 @@ export const Users: React.FC = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
       ) : (
-        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg bg-white">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">User</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created At</th>
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="font-medium text-gray-900">{user.username}</div>
-                        <div className="text-gray-500">{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <Badge variant="info">{user.role}</Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {getStatusBadge(user.status)}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <div className="flex justify-end gap-2">
-                      <Link to={`/users/${user.id}`} className="text-primary hover:text-primary-dark" title="View">
-                        <Eye className="h-5 w-5" />
-                      </Link>
-                      {typeof user.profile?.latitude === "number" &&
-                        typeof user.profile?.longitude === "number" && (
-                          <Link
-                            to={`/users/${user.id}?createRequest=1`}
-                            className="text-primary-700 hover:text-primary-900"
-                            title="Create request near this user"
-                          >
-                            <MapPin className="h-5 w-5" />
-                          </Link>
-                        )}
-                      {isAdmin && (
-                        <>
-                          {user.status !== "ACTIVE" ? (
-                            <button
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setActionStatus("ACTIVE");
-                                setIsStatusModalOpen(true);
-                              }}
-                              className="text-green-500 hover:text-green-900"
-                              title="Activate"
-                            >
-                              <CheckCircle className="h-5 w-5" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setActionStatus("BLOCKED");
-                                setIsStatusModalOpen(true);
-                              }}
-                              className="text-yellow-500 hover:text-yellow-900"
-                              title="Block"
-                            >
-                              <Ban className="h-5 w-5" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="text-red-500 hover:text-red-900"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
+        <div className="bg-white rounded-xl border border-neutral-200/90 shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">User</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created At</th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                      <div className="flex items-center">
+                        <div>
+                          <div className="font-medium text-gray-900">{user.username}</div>
+                          <div className="text-gray-500">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <Badge variant="info">{user.role}</Badge>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {getStatusBadge(user.status)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <div className="flex justify-end gap-2">
+                        <Link to={`/users/${user.id}`} className="text-primary hover:text-primary-dark" title="View">
+                          <Eye className="h-5 w-5" />
+                        </Link>
+                        {typeof user.profile?.latitude === "number" &&
+                          typeof user.profile?.longitude === "number" && (
+                            <Link
+                              to={`/users/${user.id}?createRequest=1`}
+                              className="text-primary-700 hover:text-primary-900"
+                              title="Create request near this user"
+                            >
+                              <MapPin className="h-5 w-5" />
+                            </Link>
+                          )}
+                        {isAdmin && (
+                          <>
+                            {user.status !== "ACTIVE" ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setActionStatus("ACTIVE");
+                                  setIsStatusModalOpen(true);
+                                }}
+                                className="text-green-500 hover:text-green-900"
+                                title="Activate"
+                              >
+                                <CheckCircle className="h-5 w-5" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setActionStatus("BLOCKED");
+                                  setIsStatusModalOpen(true);
+                                }}
+                                className="text-yellow-500 hover:text-yellow-900"
+                                title="Block"
+                              >
+                                <Ban className="h-5 w-5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="text-red-500 hover:text-red-900"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Pagination
             page={page}
             limit={limit}

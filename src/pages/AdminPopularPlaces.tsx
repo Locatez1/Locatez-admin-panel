@@ -438,97 +438,99 @@ export const AdminPopularPlaces: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg bg-white">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                  Place Name
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Location Address
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Map Coordinates
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Status
-                </th>
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 sm:pr-6">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {places.map((place) => (
-                <tr key={place.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border">
-                        <img
-                          src={place.image}
-                          alt={place.name}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=100&q=80";
-                          }}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900">{place.name}</p>
-                        <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">{place.description}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-                      <span className="truncate max-w-xs">{place.location}</span>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500 font-mono">
-                    {typeof place.latitude === "number" ? place.latitude.toFixed(4) : place.latitude},{" "}
-                    {typeof place.longitude === "number" ? place.longitude.toFixed(4) : place.longitude}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {place.isActive ? (
-                      <Badge variant="success">ACTIVE</Badge>
-                    ) : (
-                      <Badge variant="inactive">INACTIVE</Badge>
-                    )}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleOpenEdit(place)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" /> Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleToggleStatus(place)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border transition ${
-                          place.isActive
-                            ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-                            : "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
-                        }`}
-                      >
-                        <Power className="h-3.5 w-3.5" /> {place.isActive ? "Disable" : "Enable"}
-                      </button>
-
-                      <button
-                        onClick={() => handleOpenDelete(place)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Delete
-                      </button>
-                    </div>
-                  </td>
+        <div className="bg-white rounded-xl border border-neutral-200/90 shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                    Place Name
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Location Address
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Map Coordinates
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Status
+                  </th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 sm:pr-6">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {places.map((place) => (
+                  <tr key={place.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border">
+                          <img
+                            src={place.image}
+                            alt={place.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=100&q=80";
+                            }}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{place.name}</p>
+                          <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">{place.description}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                        <span className="truncate max-w-xs">{place.location}</span>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500 font-mono">
+                      {typeof place.latitude === "number" ? place.latitude.toFixed(4) : place.latitude},{" "}
+                      {typeof place.longitude === "number" ? place.longitude.toFixed(4) : place.longitude}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {place.isActive ? (
+                        <Badge variant="success">ACTIVE</Badge>
+                      ) : (
+                        <Badge variant="inactive">INACTIVE</Badge>
+                      )}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleOpenEdit(place)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" /> Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleToggleStatus(place)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border transition ${
+                            place.isActive
+                              ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
+                              : "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                          }`}
+                        >
+                          <Power className="h-3.5 w-3.5" /> {place.isActive ? "Disable" : "Enable"}
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenDelete(place)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Pagination
             page={page}
             limit={limit}

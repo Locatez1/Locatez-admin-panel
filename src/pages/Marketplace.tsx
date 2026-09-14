@@ -636,148 +636,150 @@ export const Marketplace: React.FC = () => {
               <p className="text-xs">Click "Add Marketplace VOD" above to list the first stream.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg bg-white">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Listing Title
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Price / Duration
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Location / Category
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Creator
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Sales / Status
-                    </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 sm:pr-6">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {streams.map((stream) => (
-                    <tr key={stream.id} className="hover:bg-gray-50/50 transition">
-                      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border relative">
-                            <img
-                              src={stream.thumbnailUrl || fallbackThumb}
-                              alt={stream.title}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = fallbackThumb;
-                              }}
-                              className="h-full w-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                              <Play className="h-4 w-4 text-white fill-white opacity-80" />
+            <div className="bg-white rounded-xl border border-neutral-200/90 shadow-2xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-300">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                        Listing Title
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Price / Duration
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Location / Category
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Creator
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Sales / Status
+                      </th>
+                      <th scope="col" className="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 sm:pr-6">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {streams.map((stream) => (
+                      <tr key={stream.id} className="hover:bg-gray-50/50 transition">
+                        <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border relative">
+                              <img
+                                src={stream.thumbnailUrl || fallbackThumb}
+                                alt={stream.title}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = fallbackThumb;
+                                }}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <Play className="h-4 w-4 text-white fill-white opacity-80" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-900 line-clamp-1">{stream.title}</p>
+                              <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">
+                                {stream.description || "No description provided."}
+                              </p>
+                              {stream.isRestrictedArea && (
+                                <div className="mt-1 flex items-center text-xs text-amber-600 font-semibold">
+                                  <AlertTriangle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                  Restricted Location ({stream.restrictedAreaType || "CONDITIONAL"})
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900 line-clamp-1">{stream.title}</p>
-                            <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">
-                              {stream.description || "No description provided."}
-                            </p>
-                            {stream.isRestrictedArea && (
-                              <div className="mt-1 flex items-center text-xs text-amber-600 font-semibold">
-                                <AlertTriangle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                Restricted Location ({stream.restrictedAreaType || "CONDITIONAL"})
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-indigo-600 text-sm">
-                            ₹{(stream.price || 0).toFixed(2)}
-                          </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1 font-mono">
-                            <Clock className="h-3 w-3 text-gray-400" />
-                            {stream.durationSeconds ? `${stream.durationSeconds}s` : "-"}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-4 text-sm text-gray-600">
-                        <div className="flex flex-col gap-0.5">
-                          {stream.customLocation?.address ? (
-                            <span className="text-xs flex items-center gap-1 text-gray-800 line-clamp-1">
-                              <MapPin className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-                              {stream.customLocation.address}
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-indigo-600 text-sm">
+                              ₹{(stream.price || 0).toFixed(2)}
                             </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">No custom location</span>
-                          )}
-                          <span className="text-[11px] text-gray-500 font-medium">
-                            Category: {stream.category?.name || "Uncategorized"}
-                          </span>
-                        </div>
-                      </td>
+                            <span className="text-xs text-gray-500 flex items-center gap-1 font-mono">
+                              <Clock className="h-3 w-3 text-gray-400" />
+                              {stream.durationSeconds ? `${stream.durationSeconds}s` : "-"}
+                            </span>
+                          </div>
+                        </td>
 
-                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600">
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-gray-400" />
-                          <span className="font-medium text-gray-900">{stream.creator?.username || "Unknown"}</span>
-                        </div>
-                      </td>
+                        <td className="px-3 py-4 text-sm text-gray-600">
+                          <div className="flex flex-col gap-0.5">
+                            {stream.customLocation?.address ? (
+                              <span className="text-xs flex items-center gap-1 text-gray-800 line-clamp-1">
+                                <MapPin className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                                {stream.customLocation.address}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">No custom location</span>
+                            )}
+                            <span className="text-[11px] text-gray-500 font-medium">
+                              Category: {stream.category?.name || "Uncategorized"}
+                            </span>
+                          </div>
+                        </td>
 
-                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
-                        <div className="flex flex-col gap-1.5 items-start">
-                          {getStatusBadgeVariant(stream.status)}
-                          <span className="text-[11px] font-semibold text-gray-600">
-                            {stream.purchaseCount || 0} purchases
-                          </span>
-                        </div>
-                      </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600">
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5 text-gray-400" />
+                            <span className="font-medium text-gray-900">{stream.creator?.username || "Unknown"}</span>
+                          </div>
+                        </td>
 
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <div className="flex items-center justify-end gap-2">
-                          {stream.status === "PENDING" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => handleApproveStream(stream.id)}
-                                isLoading={actionLoadingId === stream.id}
-                                disabled={actionLoadingId === stream.id}
-                                className="bg-green-600 hover:bg-green-700 text-xs px-2.5 py-1"
-                                title="Approve VOD listing"
-                              >
-                                <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                onClick={() => handleOpenRejectModal(stream)}
-                                disabled={actionLoadingId === stream.id}
-                                className="text-xs px-2.5 py-1"
-                                title="Reject VOD listing"
-                              >
-                                <X className="h-3.5 w-3.5 mr-1" /> Reject
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleOpenDetails(stream)}
-                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-900 border border-indigo-100 hover:bg-indigo-50"
-                          >
-                            <Info className="h-3.5 w-3.5 mr-1" /> View Details
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                          <div className="flex flex-col gap-1.5 items-start">
+                            {getStatusBadgeVariant(stream.status)}
+                            <span className="text-[11px] font-semibold text-gray-600">
+                              {stream.purchaseCount || 0} purchases
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                          <div className="flex items-center justify-end gap-2">
+                            {stream.status === "PENDING" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  onClick={() => handleApproveStream(stream.id)}
+                                  isLoading={actionLoadingId === stream.id}
+                                  disabled={actionLoadingId === stream.id}
+                                  className="bg-green-600 hover:bg-green-700 text-xs px-2.5 py-1"
+                                  title="Approve VOD listing"
+                                >
+                                  <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  onClick={() => handleOpenRejectModal(stream)}
+                                  disabled={actionLoadingId === stream.id}
+                                  className="text-xs px-2.5 py-1"
+                                  title="Reject VOD listing"
+                                >
+                                  <X className="h-3.5 w-3.5 mr-1" /> Reject
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenDetails(stream)}
+                              className="text-xs font-semibold text-indigo-600 hover:text-indigo-900 border border-indigo-100 hover:bg-indigo-50"
+                            >
+                              <Info className="h-3.5 w-3.5 mr-1" /> View Details
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               <Pagination
                 page={page}
