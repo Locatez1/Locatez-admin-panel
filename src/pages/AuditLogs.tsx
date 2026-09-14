@@ -22,7 +22,6 @@ export const AuditLogs: React.FC = () => {
   const debouncedSearch = useDebounce(search, 400);
   const [actionFilter, setActionFilter] = useState<string>("");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("");
-  const debouncedEntityTypeFilter = useDebounce(entityTypeFilter, 400);
 
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
@@ -33,7 +32,7 @@ export const AuditLogs: React.FC = () => {
       const params: Record<string, string | number> = { page, limit };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (actionFilter) params.action = actionFilter;
-      if (debouncedEntityTypeFilter) params.entityType = debouncedEntityTypeFilter;
+      if (entityTypeFilter) params.entityType = entityTypeFilter;
 
       const response = await getAuditLogs(params);
       setLogs(response.data);
@@ -48,7 +47,7 @@ export const AuditLogs: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, limit, debouncedSearch, actionFilter, debouncedEntityTypeFilter]);
+  }, [page, limit, debouncedSearch, actionFilter, entityTypeFilter]);
 
   const hasActiveFilters = Boolean(search || actionFilter || entityTypeFilter);
 
@@ -140,19 +139,29 @@ export const AuditLogs: React.FC = () => {
             />
           </div>
 
-          <div className="relative md:col-span-4">
-            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              <Layers className="h-4 w-4" />
-            </div>
-            <input
-              type="text"
-              placeholder="Entity type (e.g. VIDEO_REQUEST)…"
-              className="block w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-neutral-50/50 hover:bg-white focus:bg-white transition"
+          <div className="md:col-span-4">
+            <CustomSelect
               value={entityTypeFilter}
-              onChange={(e) => {
-                setEntityTypeFilter(e.target.value);
+              onChange={(val) => {
+                setEntityTypeFilter(val);
                 setPage(1);
               }}
+              placeholder="All Entity Types"
+              icon={<Layers className="h-4 w-4" />}
+              options={[
+                { label: "All Entity Types", value: "" },
+                { label: "VIDEO_REQUEST", value: "VIDEO_REQUEST" },
+                { label: "FULFILMENT_MEDIA", value: "FULFILMENT_MEDIA" },
+                { label: "MARKETPLACE_STREAM", value: "MARKETPLACE_STREAM" },
+                { label: "CHAT_ROOM", value: "CHAT_ROOM" },
+                { label: "WALLET", value: "WALLET" },
+                { label: "user", value: "user" },
+                { label: "system_setting", value: "system_setting" },
+                { label: "CATEGORY_SUGGESTION", value: "CATEGORY_SUGGESTION" },
+                { label: "payout", value: "payout" },
+                { label: "service_area_config", value: "service_area_config" },
+                { label: "restricted_poi_category", value: "restricted_poi_category" },
+              ]}
             />
           </div>
         </div>
