@@ -76,25 +76,54 @@ export const deletePopularPlace = async (id: string) => {
 
 /**
  * Media File Upload (POST /api/v1/media/upload)
+ * Returns the public/reference URL (legacy helper for popular places).
  */
 export const uploadMedia = async (file: File): Promise<string> => {
+  const uploaded = await uploadMediaFile(file);
+  return uploaded.url || uploaded.key;
+};
+
+/**
+ * Full media upload result — use `key` for marketplace / ideas storage fields.
+ */
+export const uploadMediaFile = async (
+  file: File
+): Promise<{ key: string; url: string }> => {
   const formData = new FormData();
   formData.append("file", file);
-  
-  const response = await apiClient.post<{ success?: boolean; data?: { url?: string } | string; url?: string }>(
-    "/media/upload",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+
+  const response = await apiClient.post<{
+    success?: boolean;
+    data?: { key?: string; url?: string; imageKey?: string; imageUrl?: string } | string;
+    key?: string;
+    url?: string;
+  }>("/media/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
   const resData = response.data;
-  if (typeof resData?.data === "string") return resData.data;
-  if (typeof resData?.data?.url === "string") return resData.data.url;
-  if (typeof resData?.url === "string") return resData.url;
-  
-  throw new Error("Invalid response format from media upload API");
+  let key = "";
+  let url = "";
+
+  if (typeof resData?.data === "object" && resData.data !== null) {
+    key = resData.data.key || resData.data.imageKey || "";
+    url = resData.data.url || resData.data.imageUrl || "";
+  } else if (typeof resData?.data === "string") {
+    key = resData.data;
+    url = resData.data;
+  } else if (typeof resData?.key === "string") {
+    key = resData.key;
+    url = resData.url || resData.key;
+  } else if (typeof resData?.url === "string") {
+    url = resData.url;
+    key = resData.url;
+  }
+
+  if (!key) {
+    throw new Error("Invalid response format from media upload API (missing key)");
+  }
+
+  return { key, url: url || key };
 };

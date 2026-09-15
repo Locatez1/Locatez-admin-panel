@@ -9,7 +9,7 @@ import {
   rejectMarketplaceStream,
 } from "../api/marketplace.api";
 import { getCategories } from "../api/categories.api";
-import { uploadMedia } from "../api/popularPlaces.api";
+import { uploadMediaFile } from "../api/popularPlaces.api";
 import { MarketplaceStream, MarketplacePurchase, Category } from "../types";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
@@ -181,16 +181,15 @@ export const Marketplace: React.FC = () => {
     }
   }, [activeTab, page, limit, debouncedSearch, statusFilter, categoryFilter, sortFilter]);
 
-  // Handle Video File Upload
+  // Handle Video File Upload — must use the real S3 key returned by /media/upload
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingVideo(true);
     try {
-      await uploadMedia(file);
-      const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      setVideoStorageKey(`videos/${Date.now()}_${filename}`);
+      const uploaded = await uploadMediaFile(file);
+      setVideoStorageKey(uploaded.key);
       toast.success("Video file uploaded successfully! Storage key populated.");
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to upload video file.");
@@ -199,16 +198,15 @@ export const Marketplace: React.FC = () => {
     }
   };
 
-  // Handle Thumbnail File Upload
+  // Handle Thumbnail File Upload — must use the real S3 key returned by /media/upload
   const handleThumbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingThumb(true);
     try {
-      await uploadMedia(file);
-      const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      setThumbnailStorageKey(`images/${Date.now()}_${filename}`);
+      const uploaded = await uploadMediaFile(file);
+      setThumbnailStorageKey(uploaded.key);
       toast.success("Thumbnail file uploaded successfully! Storage key populated.");
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to upload thumbnail file.");
