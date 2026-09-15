@@ -191,7 +191,8 @@ export interface VideoRequest {
 
 export interface AuditLog {
   id: string;
-  userId: string;
+  userId?: string;
+  actorId?: string;
   actor?: User;
   action: string;
   entityType: string;
@@ -282,6 +283,8 @@ export interface MarketplaceStream {
   durationSeconds?: number | null;
   expiresAt?: string | null;
   status: MarketplaceStatus;
+  userId?: string;
+  creatorId?: string;
   creator?: {
     id: string;
     username: string;
@@ -312,6 +315,9 @@ export interface MarketplacePurchase {
   id: string;
   amount: number;
   purchasedAt: string;
+  buyerId?: string;
+  userId?: string;
+  buyer?: User | any;
   isAccessible?: boolean;
   listing?: MarketplaceStream;
 }

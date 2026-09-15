@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getMarketplaceStreams,
   createMarketplaceStream,
@@ -724,8 +725,17 @@ export const Marketplace: React.FC = () => {
 
                         <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600">
                           <div className="flex items-center gap-1.5">
-                            <User className="h-3.5 w-3.5 text-gray-400" />
-                            <span className="font-medium text-gray-900">{stream.creator?.username || "Unknown"}</span>
+                            <User className="h-3.5 w-3.5 text-primary-500 flex-shrink-0" />
+                            {(stream.userId || stream.creator?.id) ? (
+                              <Link
+                                to={`/users/${stream.userId || stream.creator?.id}`}
+                                className="font-semibold text-primary-600 hover:text-primary-800 hover:underline transition"
+                              >
+                                {stream.creator?.fullName || stream.creator?.username || stream.userId}
+                              </Link>
+                            ) : (
+                              <span className="font-medium text-gray-900">{stream.creator?.username || "Unknown"}</span>
+                            )}
                           </div>
                         </td>
 
@@ -820,6 +830,9 @@ export const Marketplace: React.FC = () => {
                       VOD Listing Title
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Buyer
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Amount (₹)
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -838,6 +851,18 @@ export const Marketplace: React.FC = () => {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                         {pur.listing?.title || "Marketplace Video"}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600">
+                        {pur.buyerId || (pur as any).buyer?.id ? (
+                          <Link
+                            to={`/users/${pur.buyerId || (pur as any).buyer?.id}`}
+                            className="font-semibold text-primary-600 hover:text-primary-800 hover:underline"
+                          >
+                            {(pur as any).buyer?.fullName || (pur as any).buyer?.username || pur.buyerId}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-emerald-600 font-mono">
                         ₹{(pur.amount || 0).toFixed(2)}

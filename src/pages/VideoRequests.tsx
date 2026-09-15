@@ -155,10 +155,32 @@ export const VideoRequests: React.FC = () => {
     return req.requesterId || req.userId || "N/A";
   };
 
+  const getRequesterId = (req: VideoRequest) => {
+    return (
+      req.requesterId ||
+      req.userId ||
+      req.requester?.id ||
+      req.user?.id ||
+      req.requestedBy?.id ||
+      req.creator?.id ||
+      null
+    );
+  };
+
   const getFulfillerName = (req: VideoRequest) => {
     const named = getPartyName(req.fulfilment?.fulfiller);
     if (named) return named;
     return req.fulfilment?.fulfillerId || "—";
+  };
+
+  const getFulfillerId = (req: VideoRequest) => {
+    return (
+      req.fulfilment?.fulfillerId ||
+      req.fulfilment?.fulfiller?.id ||
+      (req as any).fulfillerId ||
+      (req as any).fulfiller?.id ||
+      null
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -389,7 +411,12 @@ export const VideoRequests: React.FC = () => {
                 {requests.map((request) => (
                   <tr key={request.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                      <div className="font-medium text-gray-900">{request.title}</div>
+                      <Link
+                        to={`/video-requests/${request.id}${location.search}`}
+                        className="font-semibold text-neutral-900 hover:text-primary-600 hover:underline transition"
+                      >
+                        {request.title}
+                      </Link>
                       {request.isRestrictedArea && (
                         <div className="mt-1 flex items-center text-xs text-red-600 font-medium">
                           <AlertTriangle className="mr-1 h-3 w-3" />
@@ -404,13 +431,31 @@ export const VideoRequests: React.FC = () => {
                       className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 max-w-[180px] truncate"
                       title={getRequesterName(request)}
                     >
-                      {getRequesterName(request)}
+                      {getRequesterId(request) ? (
+                        <Link
+                          to={`/users/${getRequesterId(request)}`}
+                          className="text-primary-600 font-semibold hover:text-primary-800 hover:underline transition"
+                        >
+                          {getRequesterName(request)}
+                        </Link>
+                      ) : (
+                        <span>{getRequesterName(request)}</span>
+                      )}
                     </td>
                     <td
                       className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 max-w-[180px] truncate"
                       title={getFulfillerName(request)}
                     >
-                      {getFulfillerName(request)}
+                      {getFulfillerId(request) ? (
+                        <Link
+                          to={`/users/${getFulfillerId(request)}`}
+                          className="text-primary-600 font-semibold hover:text-primary-800 hover:underline transition"
+                        >
+                          {getFulfillerName(request)}
+                        </Link>
+                      ) : (
+                        <span>{getFulfillerName(request)}</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       ₹{(request.rewardAmount || 0).toFixed(2)}

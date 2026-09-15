@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getAuditLogs } from "../api/auditLogs.api";
 import { AuditLog } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
@@ -218,8 +219,11 @@ export const AuditLogs: React.FC = () => {
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {log.actor ? (
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">
+                        <Link
+                          to={`/users/${log.actor.id || log.actorId}`}
+                          className="group flex flex-col"
+                        >
+                          <span className="font-semibold text-primary-600 group-hover:text-primary-800 group-hover:underline">
                             {(log.actor as { fullName?: string | null }).fullName ||
                               log.actor.username}
                           </span>
@@ -227,14 +231,39 @@ export const AuditLogs: React.FC = () => {
                             @{log.actor.username}
                             {log.actor.role ? ` · ${log.actor.role}` : ""}
                           </span>
-                        </div>
+                        </Link>
+                      ) : log.actorId ? (
+                        <Link
+                          to={`/users/${log.actorId}`}
+                          className="font-mono text-xs text-primary-600 hover:underline"
+                        >
+                          {log.actorId}
+                        </Link>
                       ) : (
-                        <span className="text-gray-400">{log.userId}</span>
+                        <span className="text-gray-400">{log.userId || "System"}</span>
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <span className="font-semibold">{log.entityType}</span>
-                      <span className="text-xs ml-1 text-gray-400">({log.entityId})</span>
+                      <span className="font-semibold text-neutral-800">{log.entityType}</span>
+                      {log.entityId && (
+                        log.entityType?.toUpperCase() === "VIDEO_REQUEST" ? (
+                          <Link
+                            to={`/video-requests/${log.entityId}`}
+                            className="text-xs ml-1 font-mono text-primary-600 hover:text-primary-800 hover:underline"
+                          >
+                            ({log.entityId})
+                          </Link>
+                        ) : log.entityType?.toLowerCase() === "user" ? (
+                          <Link
+                            to={`/users/${log.entityId}`}
+                            className="text-xs ml-1 font-mono text-primary-600 hover:text-primary-800 hover:underline"
+                          >
+                            ({log.entityId})
+                          </Link>
+                        ) : (
+                          <span className="text-xs ml-1 text-gray-400">({log.entityId})</span>
+                        )
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {new Date(log.createdAt).toLocaleString()}
