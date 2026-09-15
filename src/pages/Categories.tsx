@@ -327,6 +327,9 @@ export const Categories: React.FC = () => {
                       Marketplace
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Ideas
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Created At
                     </th>
                     <th scope="col" className="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 sm:pr-6">
@@ -382,6 +385,10 @@ export const Categories: React.FC = () => {
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
                           {cat.marketplaceStreamCount ?? 0}
                           <span className="ml-1 text-xs font-normal text-gray-500">listings</span>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
+                          {cat.ideaCount ?? 0}
+                          <span className="ml-1 text-xs font-normal text-gray-500">ideas</span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : "-"}

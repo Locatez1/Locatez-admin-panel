@@ -22,7 +22,6 @@ import {
   Upload,
   Search,
   Loader2,
-  MapPin,
   Filter,
   AlertTriangle,
   RefreshCw,
@@ -57,7 +56,6 @@ export const Ideas: React.FC = () => {
   const [content, setContent] = useState("");
   const [imageKey, setImageKey] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [placeName, setPlaceName] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -111,7 +109,6 @@ export const Ideas: React.FC = () => {
     setContent("");
     setImageKey("");
     setImageUrl("");
-    setPlaceName("");
     setCity("");
     setState("");
     setCategoryId("");
@@ -135,7 +132,6 @@ export const Ideas: React.FC = () => {
     setContent(idea.content || "");
     setImageKey(idea.imageKey || "");
     setImageUrl(idea.imageUrl || idea.imageKey || "");
-    setPlaceName(idea.placeName || "");
     setCity(idea.city || "");
     setState(idea.state || "");
     setCategoryId(idea.categoryId || (typeof idea.category === "object" ? idea.category?.id || "" : ""));
@@ -173,7 +169,6 @@ export const Ideas: React.FC = () => {
     if (!title.trim()) return "Title is required.";
     if (!content.trim()) return "Description / Content is required.";
     if (!imageKey.trim()) return "An image is required. Please upload an image file.";
-    if (!placeName.trim()) return "Place Name is required.";
     if (!city.trim()) return "City is required.";
     if (!state.trim()) return "State is required.";
     if (!categoryId.trim()) return "Please select a Category.";
@@ -196,7 +191,6 @@ export const Ideas: React.FC = () => {
         title: title.trim(),
         content: content.trim(),
         imageKey: imageKey.trim(),
-        placeName: placeName.trim(),
         city: city.trim(),
         state: state.trim(),
         categoryId: categoryId.trim(),
@@ -230,7 +224,6 @@ export const Ideas: React.FC = () => {
       if (title.trim() !== editingIdea.title) payload.title = title.trim();
       if (content.trim() !== editingIdea.content) payload.content = content.trim();
       if (imageKey.trim() !== editingIdea.imageKey) payload.imageKey = imageKey.trim();
-      if (placeName.trim() !== editingIdea.placeName) payload.placeName = placeName.trim();
       if (city.trim() !== editingIdea.city) payload.city = city.trim();
       if (state.trim() !== editingIdea.state) payload.state = state.trim();
       if (categoryId.trim() !== editingIdea.categoryId) payload.categoryId = categoryId.trim();
@@ -448,9 +441,6 @@ export const Ideas: React.FC = () => {
                   Idea / Details
                 </th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Place Name
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                   City / State
                 </th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -497,16 +487,6 @@ export const Ideas: React.FC = () => {
                             {idea.content}
                           </p>
                         </div>
-                      </div>
-                    </td>
-
-                    {/* Place Name */}
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                        <span className="truncate max-w-[160px]" title={idea.placeName}>
-                          {idea.placeName}
-                        </span>
                       </div>
                     </td>
 
@@ -612,18 +592,6 @@ export const Ideas: React.FC = () => {
               disabled={actionLoading}
             />
           </div>
-
-          {/* Place Name */}
-          <Input
-            id="create-idea-placename"
-            type="text"
-            label="Place Name"
-            placeholder="e.g. Gateway of India"
-            required
-            value={placeName}
-            onChange={(e) => setPlaceName(e.target.value)}
-            disabled={actionLoading}
-          />
 
           {/* City & State Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -749,17 +717,6 @@ export const Ideas: React.FC = () => {
               disabled={actionLoading}
             />
           </div>
-
-          {/* Place Name */}
-          <Input
-            id="edit-idea-placename"
-            type="text"
-            label="Place Name"
-            required
-            value={placeName}
-            onChange={(e) => setPlaceName(e.target.value)}
-            disabled={actionLoading}
-          />
 
           {/* City & State Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

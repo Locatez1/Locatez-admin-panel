@@ -45,6 +45,7 @@ export interface Category {
   isFeatured?: boolean;
   videoRequestCount?: number;
   marketplaceStreamCount?: number;
+  ideaCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -330,7 +331,7 @@ export interface Idea {
   content: string;
   imageKey: string;
   imageUrl?: string;
-  placeName: string;
+  placeName?: string | null;
   city: string;
   state: string;
   categoryId: string;
@@ -343,7 +344,7 @@ export interface CreateIdeaPayload {
   title: string;
   content: string;
   imageKey: string;
-  placeName: string;
+  placeName?: string;
   city: string;
   state: string;
   categoryId: string;
