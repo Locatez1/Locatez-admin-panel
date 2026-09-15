@@ -284,12 +284,14 @@ export const Users: React.FC = () => {
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                      <div className="flex items-center">
+                      <Link to={`/users/${user.id}`} className="group flex items-center">
                         <div>
-                          <div className="font-medium text-gray-900">{user.username}</div>
-                          <div className="text-gray-500">{user.email}</div>
+                          <div className="font-semibold text-gray-900 group-hover:text-primary-600 group-hover:underline transition">
+                            {user.username}
+                          </div>
+                          <div className="text-gray-500 text-xs">{user.email}</div>
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       <Badge variant="info">{user.role}</Badge>

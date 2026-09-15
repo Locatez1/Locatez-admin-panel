@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getAdminCategories,
   createCategory,
@@ -379,15 +380,33 @@ export const Categories: React.FC = () => {
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
-                          {cat.videoRequestCount ?? 0}
+                          <Link
+                            to={`/video-requests?search=${encodeURIComponent(cat.name)}`}
+                            className="text-primary-600 hover:text-primary-800 hover:underline font-semibold"
+                            title={`Filter video requests for category ${cat.name}`}
+                          >
+                            {cat.videoRequestCount ?? 0}
+                          </Link>
                           <span className="ml-1 text-xs font-normal text-gray-500">uses</span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
-                          {cat.marketplaceStreamCount ?? 0}
+                          <Link
+                            to="/marketplace"
+                            className="text-primary-600 hover:text-primary-800 hover:underline font-semibold"
+                            title="View Marketplace listings"
+                          >
+                            {cat.marketplaceStreamCount ?? 0}
+                          </Link>
                           <span className="ml-1 text-xs font-normal text-gray-500">listings</span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
-                          {cat.ideaCount ?? 0}
+                          <Link
+                            to="/ideas"
+                            className="text-primary-600 hover:text-primary-800 hover:underline font-semibold"
+                            title="View Ideas"
+                          >
+                            {cat.ideaCount ?? 0}
+                          </Link>
                           <span className="ml-1 text-xs font-normal text-gray-500">ideas</span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

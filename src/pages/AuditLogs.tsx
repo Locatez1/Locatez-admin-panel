@@ -7,7 +7,7 @@ import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
 import { Modal } from "../components/common/Modal";
 import { CustomSelect } from "../components/common/CustomSelect";
-import { Eye, Info, Filter, X, RotateCcw, Layers, Search } from "lucide-react";
+import { Eye, Info, Filter, X, RotateCcw, Layers, Search, Film, User, ExternalLink, ShoppingBag, Tag } from "lucide-react";
 
 export const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -25,6 +25,113 @@ export const AuditLogs: React.FC = () => {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("");
 
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+
+  // Helper to extract Video Request ID from log entity or metadata
+  const getVideoRequestId = (log: AuditLog): string | null => {
+    if (log.metadata?.videoRequestId) return String(log.metadata.videoRequestId);
+    if (log.metadata?.requestId) return String(log.metadata.requestId);
+    const entityTypeUpper = (log.entityType || "").toUpperCase();
+    if (entityTypeUpper === "VIDEO_REQUEST" && log.entityId) return String(log.entityId);
+    if (log.action?.toUpperCase().includes("VIDEO_REQUEST") && log.entityId) return String(log.entityId);
+    return null;
+  };
+
+  // Helper to extract User ID from log entity or metadata
+  const getUserId = (log: AuditLog): string | null => {
+    if (log.metadata?.targetUserId) return String(log.metadata.targetUserId);
+    if (log.metadata?.userId) return String(log.metadata.userId);
+    if (log.actor?.id) return String(log.actor.id);
+    if (log.actorId) return String(log.actorId);
+    const entityTypeLower = (log.entityType || "").toLowerCase();
+    if (entityTypeLower === "user" && log.entityId) return String(log.entityId);
+    return null;
+  };
+
+  const renderEntityLink = (log: AuditLog) => {
+    const entityTypeUpper = (log.entityType || "").toUpperCase();
+    const videoReqId = getVideoRequestId(log);
+    const userId = getUserId(log);
+
+    if (videoReqId) {
+      const isChat = entityTypeUpper === "CHAT_ROOM" || log.action?.includes("CHAT");
+      const isMedia = entityTypeUpper === "FULFILMENT_MEDIA";
+      const hash = isChat ? "#request-chat-audit" : isMedia ? "#fulfilment-media-review" : "";
+
+      return (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-neutral-800">{log.entityType}</span>
+          <Link
+            to={`/video-requests/${videoReqId}${hash}`}
+            className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-primary-600 hover:text-primary-800 hover:underline bg-primary-50 px-2 py-0.5 rounded border border-primary-200 transition"
+            title={`Open Video Request Details (${videoReqId})`}
+          >
+            <Film className="h-3 w-3 text-primary-500" />
+            <span>{log.entityId || videoReqId.slice(0, 8)}</span>
+            <ExternalLink className="h-2.5 w-2.5 text-primary-400" />
+          </Link>
+        </div>
+      );
+    }
+
+    if (entityTypeUpper === "USER" || (userId && entityTypeUpper === "USER")) {
+      return (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-neutral-800">{log.entityType}</span>
+          <Link
+            to={`/users/${userId || log.entityId}`}
+            className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-2 py-0.5 rounded border border-blue-200 transition"
+            title={`Open User Profile (${userId || log.entityId})`}
+          >
+            <User className="h-3 w-3 text-blue-500" />
+            <span>{log.entityId || userId?.slice(0, 8)}</span>
+            <ExternalLink className="h-2.5 w-2.5 text-blue-400" />
+          </Link>
+        </div>
+      );
+    }
+
+    if (entityTypeUpper === "MARKETPLACE_STREAM" || entityTypeUpper === "MARKETPLACE_PURCHASE") {
+      return (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-neutral-800">{log.entityType}</span>
+          <Link
+            to="/marketplace"
+            className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 transition"
+            title="Open Marketplace Feed"
+          >
+            <ShoppingBag className="h-3 w-3 text-indigo-500" />
+            <span>{log.entityId ? log.entityId.slice(0, 8) : "Marketplace"}</span>
+            <ExternalLink className="h-2.5 w-2.5 text-indigo-400" />
+          </Link>
+        </div>
+      );
+    }
+
+    if (entityTypeUpper === "CATEGORY" || entityTypeUpper === "CATEGORY_SUGGESTION") {
+      return (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-neutral-800">{log.entityType}</span>
+          <Link
+            to="/categories"
+            className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-purple-600 hover:text-purple-800 hover:underline bg-purple-50 px-2 py-0.5 rounded border border-purple-200 transition"
+            title="Open Category Management"
+          >
+            <Tag className="h-3 w-3 text-purple-500" />
+            <span>{log.entityId || "Categories"}</span>
+            <ExternalLink className="h-2.5 w-2.5 text-purple-400" />
+          </Link>
+        </div>
+      );
+    }
+
+    // Default Entity rendering
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="font-semibold text-neutral-800">{log.entityType}</span>
+        {log.entityId && <span className="text-xs font-mono text-gray-400">({log.entityId})</span>}
+      </div>
+    );
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -244,26 +351,7 @@ export const AuditLogs: React.FC = () => {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <span className="font-semibold text-neutral-800">{log.entityType}</span>
-                      {log.entityId && (
-                        log.entityType?.toUpperCase() === "VIDEO_REQUEST" ? (
-                          <Link
-                            to={`/video-requests/${log.entityId}`}
-                            className="text-xs ml-1 font-mono text-primary-600 hover:text-primary-800 hover:underline"
-                          >
-                            ({log.entityId})
-                          </Link>
-                        ) : log.entityType?.toLowerCase() === "user" ? (
-                          <Link
-                            to={`/users/${log.entityId}`}
-                            className="text-xs ml-1 font-mono text-primary-600 hover:text-primary-800 hover:underline"
-                          >
-                            ({log.entityId})
-                          </Link>
-                        ) : (
-                          <span className="text-xs ml-1 text-gray-400">({log.entityId})</span>
-                        )
-                      )}
+                      {renderEntityLink(log)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {new Date(log.createdAt).toLocaleString()}
@@ -294,6 +382,31 @@ export const AuditLogs: React.FC = () => {
       <Modal isOpen={!!selectedLog} onClose={() => setSelectedLog(null)} title="Audit Log Details">
         {selectedLog && (
           <div className="space-y-4">
+            {/* Quick Navigation Bar */}
+            {(getVideoRequestId(selectedLog) || getUserId(selectedLog)) && (
+              <div className="flex items-center gap-2 flex-wrap pb-3 border-b border-gray-200">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mr-1">Quick Links:</span>
+                {getVideoRequestId(selectedLog) && (
+                  <Link
+                    to={`/video-requests/${getVideoRequestId(selectedLog)}`}
+                    onClick={() => setSelectedLog(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-2xs transition cursor-pointer"
+                  >
+                    <Film className="h-4 w-4" /> Open Video Request ({getVideoRequestId(selectedLog)?.slice(0, 8)}) <ExternalLink className="h-3 w-3 opacity-75" />
+                  </Link>
+                )}
+                {getUserId(selectedLog) && (
+                  <Link
+                    to={`/users/${getUserId(selectedLog)}`}
+                    onClick={() => setSelectedLog(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-2xs transition cursor-pointer"
+                  >
+                    <User className="h-4 w-4" /> View User Profile ({getUserId(selectedLog)?.slice(0, 8)}) <ExternalLink className="h-3 w-3 opacity-75" />
+                  </Link>
+                )}
+              </div>
+            )}
+
             <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Basic Info
@@ -303,17 +416,38 @@ export const AuditLogs: React.FC = () => {
                 <dd className="font-mono font-medium">{selectedLog.action}</dd>
                 <dt className="text-gray-500">Actor:</dt>
                 <dd>
-                  {selectedLog.actor
-                    ? `${
-                        (selectedLog.actor as { fullName?: string | null }).fullName ||
-                        selectedLog.actor.username
-                      } (@${selectedLog.actor.username})`
-                    : selectedLog.userId}
+                  {getUserId(selectedLog) ? (
+                    <Link
+                      to={`/users/${getUserId(selectedLog)}`}
+                      onClick={() => setSelectedLog(null)}
+                      className="font-semibold text-primary-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <User className="h-3.5 w-3.5 text-primary-500" />
+                      {selectedLog.actor
+                        ? `${(selectedLog.actor as { fullName?: string | null }).fullName || selectedLog.actor.username} (@${selectedLog.actor.username})`
+                        : getUserId(selectedLog)}
+                    </Link>
+                  ) : (
+                    "System"
+                  )}
                 </dd>
                 <dt className="text-gray-500">Entity Type:</dt>
-                <dd>{selectedLog.entityType}</dd>
+                <dd className="font-semibold">{selectedLog.entityType}</dd>
                 <dt className="text-gray-500">Entity ID:</dt>
-                <dd>{selectedLog.entityId}</dd>
+                <dd>
+                  {getVideoRequestId(selectedLog) ? (
+                    <Link
+                      to={`/video-requests/${getVideoRequestId(selectedLog)}`}
+                      onClick={() => setSelectedLog(null)}
+                      className="font-mono font-semibold text-primary-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <Film className="h-3.5 w-3.5 text-primary-500" />
+                      {selectedLog.entityId}
+                    </Link>
+                  ) : (
+                    <span className="font-mono">{selectedLog.entityId || "N/A"}</span>
+                  )}
+                </dd>
                 <dt className="text-gray-500">Timestamp:</dt>
                 <dd>{new Date(selectedLog.createdAt).toLocaleString()}</dd>
               </dl>
@@ -326,7 +460,7 @@ export const AuditLogs: React.FC = () => {
                   Metadata Payload
                 </h4>
               </div>
-              <pre className="text-xs text-green-400 overflow-x-auto whitespace-pre-wrap">
+              <pre className="text-xs text-green-400 overflow-x-auto whitespace-pre-wrap font-mono">
                 {selectedLog.metadata
                   ? JSON.stringify(selectedLog.metadata, null, 2)
                   : "No metadata attached"}
