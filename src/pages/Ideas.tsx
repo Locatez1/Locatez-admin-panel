@@ -68,10 +68,10 @@ export const Ideas: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Load Categories for Dropdowns & Filters
+  // Load Categories for Dropdowns & Filters (pass type=ideas to fetch idea categories)
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await getCategories();
+      const res = await getCategories({ type: "ideas" });
       const list = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
       setCategories(list);
     } catch (err) {

@@ -4,6 +4,7 @@ import {
   createCategory,
   updateCategory,
   updateCategoryStatus,
+  updateCategoryFeatured,
   deleteCategory,
   getCategorySuggestions,
   acceptCategorySuggestion,
@@ -14,6 +15,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { Switch } from "../components/common/Switch";
 import {
   Plus,
   Edit2,
@@ -139,10 +141,35 @@ export const Categories: React.FC = () => {
     const actionText = targetStatus ? "enable" : "disable";
 
     try {
+      // If disabling an active category that is currently featured, un-feature it first
+      if (!targetStatus && cat.isFeatured) {
+        try {
+          await updateCategoryFeatured(cat.id, false);
+        } catch (featErr) {
+          console.warn("Could not auto-unfeature category on disable:", featErr);
+        }
+      }
       await updateCategoryStatus(cat.id, targetStatus);
       fetchCategories();
     } catch (err: any) {
       alert(err.response?.data?.message || err.message || `Failed to ${actionText} category`);
+    }
+  };
+
+  // Toggle featured for idea/filter chips (PATCH /api/v1/categories/:id/featured)
+  const handleToggleFeatured = async (cat: Category, isFeatured: boolean) => {
+    if (!cat.isActive && isFeatured) {
+      alert("Inactive categories cannot be featured in idea filters. Please enable the category first.");
+      return;
+    }
+    try {
+      await updateCategoryFeatured(cat.id, isFeatured);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === cat.id ? { ...c, isFeatured } : c))
+      );
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Failed to update featured flag");
+      fetchCategories();
     }
   };
 
@@ -289,6 +316,11 @@ export const Categories: React.FC = () => {
                       Status
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <Flame className="h-3.5 w-3.5 text-amber-500" /> Idea filters
+                      </span>
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Video requests
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -326,6 +358,22 @@ export const Categories: React.FC = () => {
                           ) : (
                             <Badge variant="inactive">INACTIVE</Badge>
                           )}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id={`category-featured-${cat.id}`}
+                              checked={Boolean(cat.isFeatured && cat.isActive)}
+                              onChange={(val) => handleToggleFeatured(cat, val)}
+                              disabled={!cat.isActive}
+                              label={!cat.isActive ? `Cannot feature inactive category ${cat.name}` : `Show ${cat.name} in idea filters`}
+                            />
+                            {!cat.isActive && (
+                              <span className="text-[10px] text-gray-400 italic">
+                                (Enable category to feature)
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">
                           {cat.videoRequestCount ?? 0}

@@ -5,7 +5,7 @@ import { Category, CategorySuggestion } from "../types";
  * User-facing active categories feed (GET /api/v1/categories)
  * Pass `description` to get AI recommendation: `{ categories: Category[] }`.
  */
-export const getCategories = async (params?: { description?: string }) => {
+export const getCategories = async (params?: { description?: string; type?: "featured" | "ideas" }) => {
   const response = await apiClient.get<{
     success: boolean;
     data: Category[] | { categories: Category[] };
@@ -60,6 +60,18 @@ export const updateCategoryStatus = async (id: string, isActive: boolean) => {
   const response = await apiClient.patch<{ success: boolean; data: Category }>(`/categories/${id}/status`, {
     isActive,
   });
+  return response.data;
+};
+
+/**
+ * Toggle featured for client filter chips (PATCH /api/v1/categories/:id/featured)
+ * Body: { isFeatured: boolean }
+ */
+export const updateCategoryFeatured = async (id: string, isFeatured: boolean) => {
+  const response = await apiClient.patch<{ success: boolean; data: Category }>(
+    `/categories/${id}/featured`,
+    { isFeatured }
+  );
   return response.data;
 };
 

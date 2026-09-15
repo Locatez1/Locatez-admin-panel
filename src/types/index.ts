@@ -41,6 +41,8 @@ export interface Category {
   name: string;
   slug: string;
   isActive: boolean;
+  /** When true, returned by GET /categories?type=featured|ideas for client filters. */
+  isFeatured?: boolean;
   videoRequestCount?: number;
   marketplaceStreamCount?: number;
   createdAt: string;
