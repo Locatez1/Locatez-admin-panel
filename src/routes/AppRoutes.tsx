@@ -11,6 +11,7 @@ import { VideoRequestDetails } from "../pages/VideoRequestDetails";
 import { Categories } from "../pages/Categories";
 import { Ideas } from "../pages/Ideas";
 import { Faqs } from "../pages/Faqs";
+import { BroadcastNotifications } from "../pages/BroadcastNotifications";
 import { PopularPlacesFeed } from "../pages/PopularPlacesFeed";
 import { AdminPopularPlaces } from "../pages/AdminPopularPlaces";
 import { AuditLogs } from "../pages/AuditLogs";
@@ -55,12 +56,18 @@ export const AppRoutes: React.FC = () => {
           <Route path="/categories" element={<Categories />} />
           <Route path="/ideas" element={<Ideas />} />
           <Route path="/admin/ideas" element={<Ideas />} />
-          <Route path="/admin/faqs" element={<Faqs />} />
           <Route path="/popular-places-admin" element={<Navigate to="/admin/popular-places" replace />} />
           <Route path="/admin/popular-places" element={<AdminPopularPlaces />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
           <Route path="/location-restrictions" element={<LocationRestrictions />} />
           <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["ADMIN", "SUPERADMIN"]} />}>
+        <Route element={<AppLayout />}>
+          <Route path="/admin/faqs" element={<Faqs />} />
+          <Route path="/admin/broadcast" element={<BroadcastNotifications />} />
         </Route>
       </Route>
 
