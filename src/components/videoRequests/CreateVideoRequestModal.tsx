@@ -2,18 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "../common/Modal";
 import { Input } from "../common/Input";
 import { Button } from "../common/Button";
+import { CustomSelect } from "../common/CustomSelect";
 import { MapboxLocationPicker } from "../common/MapboxLocationPicker";
 import { createVideoRequest } from "../../api/videoRequests.api";
-import { getRecommendedCategories } from "../../api/categories.api";
+import { getCategories } from "../../api/categories.api";
 import { getVideoRequestSettings } from "../../api/settings.api";
-import { useDebounce } from "../../hooks/useDebounce";
 import { Category } from "../../types";
 import { Loader2, MapPin, Tag } from "lucide-react";
 
 type RequestType = "VIDEO" | "IMAGE";
-
-const DESCRIPTION_MIN_CHARS = 100;
-const CATEGORY_DEBOUNCE_MS = 600;
 
 interface InitialVideoRequestData {
   title?: string;
@@ -54,29 +51,56 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   );
   const [loading, setLoading] = useState(false);
 
+  // Categories State
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  // Settings / Minimum Reward State
   const [minRewardVideo, setMinRewardVideo] = useState<number | null>(null);
   const [minRewardImage, setMinRewardImage] = useState<number | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
 
-  const [suggestedCategory, setSuggestedCategory] = useState<Category | null>(null);
-  const [categoryLoading, setCategoryLoading] = useState(false);
-  const [categoryError, setCategoryError] = useState<string | null>(null);
-
-  const debouncedDescription = useDebounce(description.trim(), CATEGORY_DEBOUNCE_MS);
-  const descriptionLength = description.trim().length;
-  const descriptionReady = descriptionLength >= DESCRIPTION_MIN_CHARS;
   const activeMinReward =
     requestType === "IMAGE" ? minRewardImage : minRewardVideo;
 
+  // Fetch categories when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    setCategoriesLoading(true);
+
+    getCategories()
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res.data)
+          ? res.data
+          : (res.data as any)?.categories || (res.data as any)?.items || [];
+        setCategories(list);
+        if (list.length > 0) {
+          setCategoryId((prev) => (prev ? prev : list[0].id));
+        }
+      })
+      .catch((err) => {
+        console.warn("[CreateVideoRequestModal] Failed to fetch categories:", err);
+      })
+      .finally(() => {
+        if (isMounted) setCategoriesLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  // Reset form fields when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
     setRequestType("VIDEO");
     setDurationSeconds(60);
     setRequestedImageCount(3);
-    setSuggestedCategory(null);
-    setCategoryError(null);
-    setCategoryLoading(false);
     setTitle("");
 
     if (initialData) {
@@ -115,61 +139,18 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     };
   }, [isOpen, initialData]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (debouncedDescription.length < DESCRIPTION_MIN_CHARS) {
-      setSuggestedCategory(null);
-      setCategoryError(null);
-      setCategoryLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setCategoryLoading(true);
-    setCategoryError(null);
-
-    getRecommendedCategories(debouncedDescription)
-      .then((categories) => {
-        if (cancelled) return;
-        const top = categories[0] ?? null;
-        setSuggestedCategory(top);
-        if (!top) {
-          setCategoryError("No category recommendation returned. Try refining the description.");
-        }
-      })
-      .catch((err: any) => {
-        if (cancelled) return;
-        setSuggestedCategory(null);
-        setCategoryError(
-          err?.response?.data?.message || err?.message || "Failed to fetch category recommendation"
-        );
-      })
-      .finally(() => {
-        if (!cancelled) setCategoryLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedDescription, isOpen]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || typeof latitude !== "number" || typeof longitude !== "number") {
       alert("Please fill in title and pick a location on the map.");
       return;
     }
-    if (!descriptionReady) {
-      alert(`Description must be at least ${DESCRIPTION_MIN_CHARS} characters.`);
+    if (description.trim().length < 20) {
+      alert("Description must be at least 20 characters.");
       return;
     }
-    if (categoryLoading) {
-      alert("Please wait for the category recommendation to finish.");
-      return;
-    }
-    if (!suggestedCategory?.id) {
-      alert("A category is required. Wait for the recommendation or refine the description.");
+    if (!categoryId) {
+      alert("Please select a category.");
       return;
     }
     if (typeof rewardAmount !== "number" || rewardAmount <= 0) {
@@ -202,12 +183,11 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
       await createVideoRequest({
         title: title.trim(),
         description: description.trim(),
-        categoryId: suggestedCategory.id,
+        categoryId,
         requestType,
         ...(requestType === "IMAGE"
           ? {
               requestedImageCount: requestedImageCount as number,
-              // Backend still requires durationSeconds for IMAGE creates.
               durationSeconds: 60,
             }
           : { durationSeconds: durationSeconds as number }),
@@ -305,6 +285,25 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           disabled={loading}
         />
 
+        {/* Category Dropdown */}
+        <div>
+          <label htmlFor="req-category" className="block text-sm font-medium text-neutral-700 mb-1">
+            Category
+          </label>
+          <CustomSelect
+            icon={<Tag className="h-4 w-4" />}
+            value={categoryId}
+            onChange={setCategoryId}
+            placeholder={categoriesLoading ? "Loading categories..." : "Select a category"}
+            disabled={loading || categoriesLoading}
+            options={categories.map((cat) => ({
+              label: cat.name,
+              value: cat.id,
+            }))}
+          />
+        </div>
+
+        {/* Description */}
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <label htmlFor="req-desc" className="block text-sm font-medium text-neutral-700">
@@ -312,60 +311,32 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
             </label>
             <span
               className={`text-xs ${
-                descriptionReady ? "text-neutral-500" : "text-yellow-900 font-medium"
+                description.trim().length >= 20 ? "text-neutral-500" : "text-amber-600 font-medium"
               }`}
             >
-              {descriptionLength}/{DESCRIPTION_MIN_CHARS} min
+              {description.trim().length}/20 min
             </span>
           </div>
           <textarea
             id="req-desc"
-            rows={4}
+            rows={3}
             required
-            minLength={DESCRIPTION_MIN_CHARS}
+            minLength={20}
             className="block w-full rounded-md border border-neutral-300 p-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 placeholder-neutral-400 disabled:bg-neutral-100 transition-colors"
             placeholder={
               requestType === "IMAGE"
-                ? "Describe the photos required in detail (min 100 characters)..."
-                : "Describe the video coverage required in detail (min 100 characters)..."
+                ? "Describe the photos required in detail (min 20 characters)..."
+                : "Describe the video coverage required in detail (min 20 characters)..."
             }
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={loading}
           />
-          {!descriptionReady && (
-            <p className="mt-1 text-xs text-yellow-900 font-medium">
-              Add at least {DESCRIPTION_MIN_CHARS - descriptionLength} more character
-              {DESCRIPTION_MIN_CHARS - descriptionLength === 1 ? "" : "s"} before category
-              recommendation runs.
+          {description.trim().length > 0 && description.trim().length < 20 && (
+            <p className="mt-1 text-xs text-amber-600 font-medium">
+              Description must be at least 20 characters ({20 - description.trim().length} more needed).
             </p>
           )}
-        </div>
-
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5">
-          <div className="flex items-start gap-2">
-            <Tag className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
-            <div className="min-w-0 flex-1 text-sm">
-              <p className="font-medium text-neutral-800">Category (auto from description)</p>
-              {categoryLoading ? (
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Fetching recommendation…
-                </p>
-              ) : suggestedCategory ? (
-                <p className="mt-1 text-xs text-neutral-700">
-                  Attached: <strong className="text-neutral-900">{suggestedCategory.name}</strong>
-                </p>
-              ) : categoryError ? (
-                <p className="mt-1 text-xs text-red-600 font-medium">{categoryError}</p>
-              ) : (
-                <p className="mt-1 text-xs text-neutral-500">
-                  Will call categories API after you pause typing (min {DESCRIPTION_MIN_CHARS}{" "}
-                  characters).
-                </p>
-              )}
-            </div>
-          </div>
         </div>
 
         <div>
@@ -454,7 +425,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           <Button
             type="submit"
             isLoading={loading}
-            disabled={loading || categoryLoading || !suggestedCategory}
+            disabled={loading || categoriesLoading || !categoryId || description.trim().length < 20}
           >
             {requestType === "IMAGE" ? "Submit Image Request" : "Submit Video Request"}
           </Button>
