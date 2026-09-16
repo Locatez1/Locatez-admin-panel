@@ -38,14 +38,20 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   initialData,
 }) => {
   const [requestType, setRequestType] = useState<RequestType>("VIDEO");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState<number | "">("");
-  const [longitude, setLongitude] = useState<number | "">("");
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [address, setAddress] = useState(initialData?.address || "");
+  const [latitude, setLatitude] = useState<number | "">(
+    typeof initialData?.latitude === "number" ? initialData.latitude : ""
+  );
+  const [longitude, setLongitude] = useState<number | "">(
+    typeof initialData?.longitude === "number" ? initialData.longitude : ""
+  );
   const [durationSeconds, setDurationSeconds] = useState<number | "">(60);
   const [requestedImageCount, setRequestedImageCount] = useState<number | "">(3);
-  const [rewardAmount, setRewardAmount] = useState<number | "">("");
+  const [rewardAmount, setRewardAmount] = useState<number | "">(
+    typeof initialData?.rewardAmount === "number" ? initialData.rewardAmount : ""
+  );
   const [loading, setLoading] = useState(false);
 
   const [minRewardVideo, setMinRewardVideo] = useState<number | null>(null);
@@ -72,14 +78,15 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     setCategoryError(null);
     setCategoryLoading(false);
 
-    setTitle("");
     if (initialData) {
+      setTitle(initialData.title || "");
       setDescription(initialData.description || "");
       setAddress(initialData.address || "");
       setLatitude(typeof initialData.latitude === "number" ? initialData.latitude : "");
       setLongitude(typeof initialData.longitude === "number" ? initialData.longitude : "");
       setRewardAmount(typeof initialData.rewardAmount === "number" ? initialData.rewardAmount : "");
     } else {
+      setTitle("");
       setDescription("");
       setAddress("");
       setLatitude("");

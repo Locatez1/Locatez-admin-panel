@@ -145,21 +145,6 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
 
       map.on("load", () => {
         map.resize();
-
-        // Auto-detect user current location if no initial coordinates are passed
-        if ((latitude === "" || longitude === "") && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const { latitude: lat, longitude: lng } = pos.coords;
-              onCoordinatesChange(lat, lng);
-              if (markerRef.current) markerRef.current.setLngLat([lng, lat]);
-              if (mapRef.current) mapRef.current.flyTo({ center: [lng, lat], zoom: 14 });
-              reverseGeocode(lng, lat);
-            },
-            () => {},
-            { timeout: 5000 }
-          );
-        }
       });
 
       map.on("error", (e) => {
