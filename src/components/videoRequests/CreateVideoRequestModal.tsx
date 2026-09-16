@@ -38,7 +38,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   initialData,
 }) => {
   const [requestType, setRequestType] = useState<RequestType>("VIDEO");
-  const [title, setTitle] = useState(initialData?.title || "");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState(initialData?.description || "");
   const [address, setAddress] = useState(initialData?.address || "");
   const [latitude, setLatitude] = useState<number | "">(
@@ -77,16 +77,15 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
     setSuggestedCategory(null);
     setCategoryError(null);
     setCategoryLoading(false);
+    setTitle("");
 
     if (initialData) {
-      setTitle(initialData.title || "");
       setDescription(initialData.description || "");
       setAddress(initialData.address || "");
       setLatitude(typeof initialData.latitude === "number" ? initialData.latitude : "");
       setLongitude(typeof initialData.longitude === "number" ? initialData.longitude : "");
       setRewardAmount(typeof initialData.rewardAmount === "number" ? initialData.rewardAmount : "");
     } else {
-      setTitle("");
       setDescription("");
       setAddress("");
       setLatitude("");

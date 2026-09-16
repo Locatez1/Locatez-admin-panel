@@ -366,9 +366,6 @@ export const UserDetails: React.FC = () => {
         initialData={
           hasLocation
             ? {
-                title: user.profile?.city
-                  ? `Nearby request — ${user.profile.city}`
-                  : `Nearby request for ${user.username}`,
                 address: [user.profile?.addressLine1, user.profile?.city, user.profile?.state]
                   .filter(Boolean)
                   .join(", "),
