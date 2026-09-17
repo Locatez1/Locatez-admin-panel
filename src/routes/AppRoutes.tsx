@@ -18,6 +18,7 @@ import { AuditLogs } from "../pages/AuditLogs";
 import { Settings } from "../pages/Settings";
 import { LocationRestrictions } from "../pages/LocationRestrictions";
 import { Marketplace } from "../pages/Marketplace";
+import { Profile } from "../pages/Profile";
 import { Unauthorized } from "../pages/Unauthorized";
 import { LiveKitChatDemo } from "../pages/LiveKitChatDemo";
 import { useAuth } from "../context/AuthContext";
@@ -41,6 +42,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/popular-places" element={<PopularPlacesFeed />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/chat-demo" element={<LiveKitChatDemo />} />
         </Route>
       </Route>

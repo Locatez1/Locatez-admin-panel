@@ -45,3 +45,43 @@ export const getUserActivity = async (userId: string, params?: any) => {
   });
   return response.data;
 };
+
+export const getMe = async () => {
+  const response = await apiClient.get<{ success: boolean; data: User }>("/users/me");
+  return response.data;
+};
+
+export type UpdateAccountPayload = {
+  username?: string;
+  email?: string;
+  phone?: string;
+};
+
+export type UpdateProfilePayload = {
+  fullName?: string;
+  profilePhotoUrl?: string;
+  bio?: string | null;
+  gender?: string;
+  dateOfBirth?: string;
+  addressLine1?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pincode?: string;
+};
+
+export const updateMyAccount = async (payload: UpdateAccountPayload) => {
+  const response = await apiClient.patch<{ success: boolean; data: User }>(
+    "/users/me",
+    payload
+  );
+  return response.data;
+};
+
+export const updateMyProfile = async (payload: UpdateProfilePayload) => {
+  const response = await apiClient.patch<{ success: boolean; data: User }>(
+    "/users/me/profile",
+    payload
+  );
+  return response.data;
+};

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Video, Tag, Compass, ShieldAlert, MessageSquare, Settings, Store, Lightbulb, MapPin, HelpCircle, Bell } from "lucide-react";
+import { LayoutDashboard, Users, Video, Tag, Compass, ShieldAlert, MessageSquare, Settings, Store, Lightbulb, MapPin, HelpCircle, Bell, UserRound } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "../../context/AuthContext";
 
@@ -27,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { name: "Location Restrictions", path: "/location-restrictions", icon: MapPin, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Audit Logs", path: "/audit-logs", icon: ShieldAlert, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
     { name: "Admin Settings", path: "/settings", icon: Settings, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"] },
+    { name: "My Profile", path: "/profile", icon: UserRound, roles: ["ADMIN", "MODERATOR", "SUPERADMIN", "USER"] },
     { name: "LiveKit Chat Demo", path: "/chat-demo", icon: MessageSquare, roles: ["ADMIN", "MODERATOR", "SUPERADMIN"], hidden: true },
   ];
 

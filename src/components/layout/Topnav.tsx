@@ -1,7 +1,7 @@
 import React from "react";
 import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface TopnavProps {
   onToggleSidebar?: () => void;
@@ -19,7 +19,7 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
   const getFirstName = (u: any) => {
     if (!u) return "User";
     if (u.firstName) return u.firstName;
-    const name = u.fullName || u.displayName || u.name || u.username || "";
+    const name = u.fullName || u.profile?.fullName || u.displayName || u.name || u.username || "";
     if (name) {
       const first = name.split(/[\s_]+/)[0];
       if (first) return first.charAt(0).toUpperCase() + first.slice(1);
@@ -46,9 +46,14 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
         <span className="font-bold text-primary-500 text-lg md:hidden">Locatez</span>
       </div>
       <div className="flex items-center space-x-3 sm:space-x-4">
-        <div className="flex flex-col items-end">
+        <Link
+          to="/profile"
+          className="flex flex-col items-end rounded-md px-2 py-1 hover:bg-neutral-50 transition"
+          title="My profile"
+        >
           <span className="text-sm font-semibold text-neutral-900">{getFirstName(user)}</span>
-        </div>
+          <span className="text-[11px] text-neutral-400">View profile</span>
+        </Link>
         <button
           onClick={handleLogout}
           className="rounded-full bg-white p-1 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition"
@@ -61,4 +66,3 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
     </header>
   );
 };
-

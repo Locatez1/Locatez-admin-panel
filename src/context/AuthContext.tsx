@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Role } from "../types";
 import { login as loginApi, logout as logoutApi } from "../api/auth.api";
+import { getMe } from "../api/users.api";
 import { registerCurrentFcmToken, unregisterCurrentFcmToken } from "../services/firebase.service";
 
 interface AuthContextType {
@@ -10,6 +11,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: any) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: (user: User | null) => void;
+  refreshUser: () => Promise<User | null>;
   isLoading: boolean;
 }
 
@@ -93,6 +96,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const persistUser = (next: User | null) => {
+    setUser(next);
+    if (next) {
+      localStorage.setItem("user", JSON.stringify(next));
+    } else {
+      localStorage.removeItem("user");
+    }
+  };
+
+  const refreshUser = async () => {
+    if (!token) return null;
+    const res = await getMe();
+    persistUser(res.data);
+    return res.data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -102,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token,
         login,
         logout,
+        setUser: persistUser,
+        refreshUser,
         isLoading,
       }}
     >
