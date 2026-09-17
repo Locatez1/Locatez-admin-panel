@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { UserAvatar } from "../components/common/UserAvatar";
 import { getUsers, createUser, updateUserStatus, deleteUser } from "../api/users.api";
 import { User, UserStatus } from "../types";
 import { useAuth } from "../context/AuthContext";
@@ -281,18 +282,27 @@ export const Users: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                      <Link to={`/users/${user.id}`} className="group flex items-center">
-                        <div>
-                          <div className="font-semibold text-gray-900 group-hover:text-primary-600 group-hover:underline transition">
-                            {user.username}
+                {users.map((user) => {
+                  const fullName = user.fullName || user.profile?.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim();
+                  const avatarUrl = user.profile?.profilePhotoUrl;
+                  return (
+                    <tr key={user.id} className="hover:bg-neutral-50/80 transition-colors">
+                      <td className="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm sm:pl-6">
+                        <Link to={`/users/${user.id}`} className="group flex items-center gap-3">
+                          <UserAvatar src={avatarUrl} name={fullName || user.username} size="md" />
+                          <div>
+                            {fullName && (
+                              <div className="font-semibold text-gray-900 group-hover:text-primary-600 transition">
+                                {fullName}
+                              </div>
+                            )}
+                            <div className={`text-xs ${fullName ? "text-gray-500" : "font-semibold text-gray-900 group-hover:text-primary-600 transition"}`}>
+                              @{user.username}
+                            </div>
+                            <div className="text-gray-400 text-[11px]">{user.email}</div>
                           </div>
-                          <div className="text-gray-500 text-xs">{user.email}</div>
-                        </div>
-                      </Link>
-                    </td>
+                        </Link>
+                      </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       <Badge variant="info">{user.role}</Badge>
                     </td>
@@ -359,7 +369,8 @@ export const Users: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

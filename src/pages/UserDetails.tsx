@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { UserAvatar } from "../components/common/UserAvatar";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { getUserById, getUserWallet, getUserTransactions, getUserActivity } from "../api/users.api";
 import { User, Wallet, WalletTransaction, AuditLog, TransactionType } from "../types";
@@ -269,10 +270,19 @@ export const UserDetails: React.FC = () => {
       {/* TAB 1: User Profile */}
       {activeTab === "profile" && (
         <div className="overflow-hidden bg-white shadow sm:rounded-lg border border-gray-200">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center gap-3 flex-wrap">
-            <div>
-              <h3 className="text-lg font-medium leading-6 text-gray-900">User Information</h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and account status.</p>
+          <div className="px-4 py-5 sm:px-6 flex justify-between items-center gap-3 flex-wrap border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <UserAvatar
+                src={user.profile?.profilePhotoUrl}
+                name={user.fullName || user.profile?.fullName || user.username}
+                size="xl"
+              />
+              <div>
+                <h3 className="text-xl font-bold leading-6 text-gray-900">
+                  {user.fullName || user.profile?.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">@{user.username} • {user.email}</p>
+              </div>
             </div>
             <Button
               type="button"
@@ -288,8 +298,14 @@ export const UserDetails: React.FC = () => {
               <Plus className="h-4 w-4" /> Create request nearby
             </Button>
           </div>
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
+          <div className="px-4 py-5 sm:p-0">
             <dl className="sm:divide-y sm:divide-gray-200">
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Full Name</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 font-medium">
+                  {user.fullName || user.profile?.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Not provided"}
+                </dd>
+              </div>
               <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Username</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 font-medium">{user.username}</dd>
@@ -298,6 +314,40 @@ export const UserDetails: React.FC = () => {
                 <dt className="text-sm font-medium text-gray-500">Email address</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{user.email}</dd>
               </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Gender</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 capitalize">
+                  {user.profile?.gender ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {user.profile.gender.toLowerCase()}
+                    </span>
+                  ) : (
+                    "Not provided"
+                  )}
+                </dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  {user.profile?.dateOfBirth ? (
+                    new Date(user.profile.dateOfBirth).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  ) : (
+                    "Not provided"
+                  )}
+                </dd>
+              </div>
+              {user.profile?.bio && (
+                <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-500">Bio</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
+                    "{user.profile.bio}"
+                  </dd>
+                </div>
+              )}
               <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Phone</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{user.phone || "Not provided"}</dd>
