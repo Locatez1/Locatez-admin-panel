@@ -70,6 +70,30 @@ input[type="search"]::-webkit-search-results-decoration {
   appearance: none;
 }
 
+/* Custom Modern Sleek Scrollbars (replaces native Windows chunky arrow scrollbars) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(169, 174, 173, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 165, 158, 0.6);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(169, 174, 173, 0.35) transparent;
+}
+
 /* Utility to hide scrollbars on scrollable tab containers */
 .scrollbar-none {
   -ms-overflow-style: none;

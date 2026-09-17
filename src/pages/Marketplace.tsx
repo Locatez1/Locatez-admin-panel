@@ -3,14 +3,13 @@ import { Link } from "react-router-dom";
 import {
   getMarketplaceStreams,
   createMarketplaceStream,
-  getMarketplacePurchases,
   getMarketplacePlaybackAccess,
   approveMarketplaceStream,
   rejectMarketplaceStream,
 } from "../api/marketplace.api";
 import { getCategories } from "../api/categories.api";
 import { uploadMediaFile } from "../api/popularPlaces.api";
-import { MarketplaceStream, MarketplacePurchase, Category } from "../types";
+import { MarketplaceStream, Category } from "../types";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
@@ -45,7 +44,6 @@ import {
 
 export const Marketplace: React.FC = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"streams" | "purchases">("streams");
 
   // Streams State
   const [streams, setStreams] = useState<MarketplaceStream[]>([]);
@@ -66,11 +64,6 @@ export const Marketplace: React.FC = () => {
 
   // Categories list for dropdowns
   const [categories, setCategories] = useState<Category[]>([]);
-
-  // Purchases State
-  const [purchases, setPurchases] = useState<MarketplacePurchase[]>([]);
-  const [purchasesLoading, setPurchasesLoading] = useState(false);
-  const [purchasesError, setPurchasesError] = useState<string | null>(null);
 
   // Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -148,38 +141,13 @@ export const Marketplace: React.FC = () => {
     }
   };
 
-  // Fetch Purchases
-  const fetchPurchases = async () => {
-    setPurchasesLoading(true);
-    setPurchasesError(null);
-    try {
-      const res = await getMarketplacePurchases();
-      const resData = res.data as any;
-      if (Array.isArray(resData)) {
-        setPurchases(resData);
-      } else if (resData?.items) {
-        setPurchases(resData.items);
-      } else {
-        setPurchases([]);
-      }
-    } catch (err: any) {
-      setPurchasesError(err.response?.data?.message || err.message || "Failed to fetch purchases");
-    } finally {
-      setPurchasesLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchCategoriesList();
   }, []);
 
   useEffect(() => {
-    if (activeTab === "streams") {
-      fetchStreams();
-    } else {
-      fetchPurchases();
-    }
-  }, [activeTab, page, limit, debouncedSearch, statusFilter, categoryFilter, sortFilter]);
+    fetchStreams();
+  }, [page, limit, debouncedSearch, statusFilter, categoryFilter, sortFilter]);
 
   // Handle Video File Upload — must use the real S3 key returned by /media/upload
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -457,41 +425,8 @@ export const Marketplace: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 overflow-x-auto">
-        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max">
-          <button
-            onClick={() => {
-              setActiveTab("streams");
-              setPage(1);
-            }}
-            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 transition ${
-              activeTab === "streams"
-                ? "border-indigo-600 text-indigo-600 font-semibold"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <Film className="h-4 w-4" /> VOD Listings ({total})
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("purchases");
-              setPage(1);
-            }}
-            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 transition ${
-              activeTab === "purchases"
-                ? "border-indigo-600 text-indigo-600 font-semibold"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <ShoppingBag className="h-4 w-4" /> Purchases History ({purchases.length})
-          </button>
-        </nav>
-      </div>
-
-      {/* TAB 1: VOD LISTINGS */}
-      {activeTab === "streams" && (
-        <div className="space-y-4">
+      {/* VOD Listings Content */}
+      <div className="space-y-4">
           {/* Styled Filters Container Card */}
           <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
             <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
@@ -799,90 +734,6 @@ export const Marketplace: React.FC = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* TAB 2: PURCHASES HISTORY */}
-      {activeTab === "purchases" && (
-        <div>
-          {purchasesError ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md text-sm">{purchasesError}</div>
-          ) : purchasesLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
-            </div>
-          ) : purchases.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500 space-y-3">
-              <ShoppingBag className="h-12 w-12 mx-auto text-gray-300" />
-              <p className="text-lg font-medium text-gray-900">No marketplace purchases record found</p>
-              <p className="text-xs">Purchased VOD stream transactions will appear here.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg bg-white">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Purchase ID
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      VOD Listing Title
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Buyer
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Amount (₹)
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Purchased At
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Access Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {purchases.map((pur) => (
-                    <tr key={pur.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-xs font-mono font-bold text-gray-900 sm:pl-6">
-                        {pur.id}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-                        {pur.listing?.title || "Marketplace Video"}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600">
-                        {pur.buyerId || (pur as any).buyer?.id ? (
-                          <Link
-                            to={`/users/${pur.buyerId || (pur as any).buyer?.id}`}
-                            className="font-semibold text-primary-600 hover:text-primary-800 hover:underline"
-                          >
-                            {(pur as any).buyer?.fullName || (pur as any).buyer?.username || pur.buyerId}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-emerald-600 font-mono">
-                        ₹{(pur.amount || 0).toFixed(2)}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
-                        {pur.purchasedAt ? new Date(pur.purchasedAt).toLocaleString() : "-"}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
-                        {pur.isAccessible ? (
-                          <Badge variant="success">ACCESSIBLE</Badge>
-                        ) : (
-                          <Badge variant="default">EXPIRED / RESTRICTED</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* CREATE MARKETPLACE STREAM MODAL */}
       <Modal

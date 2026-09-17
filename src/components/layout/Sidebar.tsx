@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </button>
           )}
         </div>
-        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto scrollbar-none">
           {filteredNav.map((item) => {
             const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
             return (
