@@ -28,7 +28,11 @@ export const Login: React.FC = () => {
       const targetPath = from !== "/" ? from : (loggedUser?.role === "USER" ? "/chat-demo" : "/");
       navigate(targetPath, { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Failed to login");
+      let msg = err.response?.data?.message || err.message || "Failed to login";
+      if (typeof err.response?.data === "string" && err.response.data.includes("<!DOCTYPE")) {
+        msg = "Netlify proxy session expired. Please refresh the browser page (F5) and sign in again.";
+      }
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
