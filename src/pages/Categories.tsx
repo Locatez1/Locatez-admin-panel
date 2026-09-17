@@ -59,8 +59,8 @@ export const Categories: React.FC = () => {
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
   // Fetch Categories
-  const fetchCategories = async () => {
-    setCategoriesLoading(true);
+  const fetchCategories = async (showLoading = true) => {
+    if (showLoading) setCategoriesLoading(true);
     setCategoriesError(null);
     try {
       const res = await getAdminCategories();
@@ -69,7 +69,7 @@ export const Categories: React.FC = () => {
     } catch (err: any) {
       setCategoriesError(err.response?.data?.message || err.message || "Failed to load categories");
     } finally {
-      setCategoriesLoading(false);
+      if (showLoading) setCategoriesLoading(false);
     }
   };
 
@@ -102,7 +102,7 @@ export const Categories: React.FC = () => {
       await createCategory({ name: newCategoryName.trim() });
       setNewCategoryName("");
       setIsCreateModalOpen(false);
-      fetchCategories();
+      fetchCategories(false);
     } catch (err: any) {
       alert(err.response?.data?.message || err.message || "Failed to create category");
     } finally {
@@ -124,7 +124,7 @@ export const Categories: React.FC = () => {
       setEditingCategory(null);
       setEditCategoryName("");
       setIsEditModalOpen(false);
-      fetchCategories();
+      fetchCategories(false);
     } catch (err: any) {
       alert(err.response?.data?.message || err.message || "Failed to update category name");
     } finally {
@@ -141,6 +141,19 @@ export const Categories: React.FC = () => {
     const targetStatus = !cat.isActive;
     const actionText = targetStatus ? "enable" : "disable";
 
+    // Optimistically update local state in-place so table stays intact with zero flicker
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === cat.id
+          ? {
+              ...c,
+              isActive: targetStatus,
+              isFeatured: !targetStatus ? false : c.isFeatured,
+            }
+          : c
+      )
+    );
+
     try {
       // If disabling an active category that is currently featured, un-feature it first
       if (!targetStatus && cat.isFeatured) {
@@ -151,9 +164,12 @@ export const Categories: React.FC = () => {
         }
       }
       await updateCategoryStatus(cat.id, targetStatus);
-      fetchCategories();
     } catch (err: any) {
       alert(err.response?.data?.message || err.message || `Failed to ${actionText} category`);
+      // Revert optimistic state on error
+      setCategories((prev) =>
+        prev.map((c) => (c.id === cat.id ? { ...c, isActive: cat.isActive, isFeatured: cat.isFeatured } : c))
+      );
     }
   };
 
