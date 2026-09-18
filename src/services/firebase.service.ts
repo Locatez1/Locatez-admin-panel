@@ -30,6 +30,18 @@ export const ensureFcmToken = async (): Promise<string | null> => {
     return currentFcmToken;
   }
 
+  const isConfigured = Boolean(
+    firebaseConfig.apiKey &&
+    !firebaseConfig.apiKey.includes("YOUR_FIREBASE_API_KEY") &&
+    firebaseConfig.projectId &&
+    !firebaseConfig.projectId.includes("YOUR_PROJECT_ID")
+  );
+
+  if (!isConfigured) {
+    console.warn("[FCM] Firebase environment variables not configured on this host. Skipping FCM initialization.");
+    return null;
+  }
+
   try {
     const supported = await isSupported();
     if (!supported) {

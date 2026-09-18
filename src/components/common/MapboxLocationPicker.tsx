@@ -4,9 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { Search, MapPin, Loader2, Navigation, AlertTriangle, Crosshair, Layers } from "lucide-react";
 import { useDebounce } from "../../hooks/useDebounce";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
-
-mapboxgl.accessToken = MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "pk.eyJ1IjoidmlrcmFtdmFzaXNodGgiLCJhIjoiY21zc3B0Z3A5MGFyMTJ3c2R0eWYxM3pzaCJ9.Wsb5ZxlzzlozCcN7_mIJow";
 
 interface MapboxSearchResult {
   id: string;
@@ -135,76 +133,87 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    if (!mapRef.current) {
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: MAP_STYLES[mapStyle],
-        center: [defaultLng, defaultLat],
-        zoom: typeof latitude === "number" ? 14 : 11,
-      });
+    if (!MAPBOX_TOKEN || !MAPBOX_TOKEN.trim() || MAPBOX_TOKEN.includes("YOUR_")) {
+      setTokenError(true);
+      return;
+    }
 
-      map.on("load", () => {
-        map.resize();
-      });
+    try {
+      mapboxgl.accessToken = MAPBOX_TOKEN;
+      if (!mapRef.current) {
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: MAP_STYLES[mapStyle],
+          center: [defaultLng, defaultLat],
+          zoom: typeof latitude === "number" ? 14 : 11,
+        });
 
-      map.on("error", (e) => {
-        if (e.error && (e.error as any).status === 401) {
-          setTokenError(true);
-        }
-      });
+        map.on("load", () => {
+          map.resize();
+        });
 
-      map.addControl(new mapboxgl.NavigationControl(), "top-right");
+        map.on("error", (e) => {
+          if (e.error && (e.error as any).status === 401) {
+            setTokenError(true);
+          }
+        });
 
-      // Create Draggable Mapbox Marker
-      const marker = new mapboxgl.Marker({
-        draggable: true,
-        color: "#25A59E", // Figma Primary Teal
-      })
-        .setLngLat([defaultLng, defaultLat])
-        .addTo(map);
+        map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      // Handle Marker Drag End
-      marker.on("dragend", () => {
-        const lngLat = marker.getLngLat();
-        onCoordinatesChange(lngLat.lat, lngLat.lng);
-        reverseGeocode(lngLat.lng, lngLat.lat);
-      });
+        // Create Draggable Mapbox Marker
+        const marker = new mapboxgl.Marker({
+          draggable: true,
+          color: "#25A59E", // Figma Primary Teal
+        })
+          .setLngLat([defaultLng, defaultLat])
+          .addTo(map);
 
-      // Handle Map Click
-      map.on("click", (e) => {
-        const { lng, lat } = e.lngLat;
-        marker.setLngLat([lng, lat]);
-        onCoordinatesChange(lat, lng);
-        reverseGeocode(lng, lat);
-      });
+        // Handle Marker Drag End
+        marker.on("dragend", () => {
+          const lngLat = marker.getLngLat();
+          onCoordinatesChange(lngLat.lat, lngLat.lng);
+          reverseGeocode(lngLat.lng, lngLat.lat);
+        });
 
-      mapRef.current = map;
-      markerRef.current = marker;
+        // Handle Map Click
+        map.on("click", (e) => {
+          const { lng, lat } = e.lngLat;
+          marker.setLngLat([lng, lat]);
+          onCoordinatesChange(lat, lng);
+          reverseGeocode(lng, lat);
+        });
 
-      // Trigger map resize shortly after mount for modal visibility
-      const resizeTimer = setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.resize();
-        }
-      }, 150);
+        mapRef.current = map;
+        markerRef.current = marker;
 
-      // ResizeObserver to handle dynamic modal container sizing
-      const resizeObserver = new ResizeObserver(() => {
-        if (mapRef.current) {
-          mapRef.current.resize();
-        }
-      });
-      resizeObserver.observe(mapContainerRef.current);
+        // Trigger map resize shortly after mount for modal visibility
+        const resizeTimer = setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.resize();
+          }
+        }, 150);
 
-      return () => {
-        clearTimeout(resizeTimer);
-        resizeObserver.disconnect();
-        if (mapRef.current) {
-          mapRef.current.remove();
-          mapRef.current = null;
-          markerRef.current = null;
-        }
-      };
+        // ResizeObserver to handle dynamic modal container sizing
+        const resizeObserver = new ResizeObserver(() => {
+          if (mapRef.current) {
+            mapRef.current.resize();
+          }
+        });
+        resizeObserver.observe(mapContainerRef.current);
+
+        return () => {
+          clearTimeout(resizeTimer);
+          resizeObserver.disconnect();
+          if (mapRef.current) {
+            mapRef.current.remove();
+            mapRef.current = null;
+            markerRef.current = null;
+          }
+        };
+      }
+    } catch (err) {
+      console.warn("[Mapbox] Failed to initialize Mapbox GL:", err);
+      setTokenError(true);
     }
   }, []);
 
@@ -461,27 +470,24 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
             <button
               type="button"
               onClick={() => handleStyleChange("streets")}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "streets" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
-              }`}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${mapStyle === "streets" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                }`}
             >
               Streets
             </button>
             <button
               type="button"
               onClick={() => handleStyleChange("satellite")}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "satellite" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
-              }`}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${mapStyle === "satellite" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                }`}
             >
               Satellite Hybrid
             </button>
             <button
               type="button"
               onClick={() => handleStyleChange("outdoors")}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
-                mapStyle === "outdoors" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
-              }`}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${mapStyle === "outdoors" ? "bg-white text-primary-900 font-bold shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                }`}
             >
               Outdoors
             </button>
