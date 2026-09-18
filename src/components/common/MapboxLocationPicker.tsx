@@ -4,7 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { Search, MapPin, Loader2, Navigation, AlertTriangle, Crosshair, Layers } from "lucide-react";
 import { useDebounce } from "../../hooks/useDebounce";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "pk.eyJ1IjoidmlrcmFtdmFzaXNodGgiLCJhIjoiY21zc3B0Z3A5MGFyMTJ3c2R0eWYxM3pzaCJ9.Wsb5ZxlzzlozCcN7_mIJow";
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
 
 interface MapboxSearchResult {
   id: string;
