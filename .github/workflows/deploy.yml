@@ -15,6 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Strip git metadata
+        run: rm -rf .git
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
