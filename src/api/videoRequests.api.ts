@@ -46,3 +46,11 @@ export const rejectVideoRequest = async (id: string, reason: string) => {
   const response = await apiClient.patch<{ success: boolean; data: VideoRequest }>(`/video-requests/${id}/reject`, { reason });
   return response.data;
 };
+
+/** Requester, fulfiller, or ADMIN/MODERATOR — uses existing completion/reward path. */
+export const completeVideoRequest = async (id: string) => {
+  const response = await apiClient.post<{ success: boolean; data: VideoRequest }>(
+    `/video-requests/${id}/complete`
+  );
+  return response.data;
+};

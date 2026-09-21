@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { getVideoRequestById, approveVideoRequest, rejectVideoRequest } from "../api/videoRequests.api";
+import { getVideoRequestById, approveVideoRequest, rejectVideoRequest, completeVideoRequest } from "../api/videoRequests.api";
 import {
   approveFulfilmentMedia,
   rejectFulfilmentMedia,
@@ -34,6 +34,7 @@ import {
   RefreshCw,
   UserCheck,
   AlertCircle,
+  CheckCircle2,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -232,6 +233,31 @@ export const VideoRequestDetails: React.FC = () => {
         alert("This request was already processed by another moderator/admin.");
       } else {
         alert(err.response?.data?.message || "Failed to reject request");
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!id) return;
+    if (
+      !window.confirm(
+        "Mark this request as completed? This runs the normal completion flow and credits the fulfiller reward from the requester hold."
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await completeVideoRequest(id);
+      await fetchRequest();
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        alert("This request was already completed by another actor.");
+      } else {
+        alert(err.response?.data?.message || "Failed to complete request");
       }
     } finally {
       setActionLoading(false);
@@ -440,6 +466,10 @@ export const VideoRequestDetails: React.FC = () => {
   const fulfilmentLatest = request.fulfilmentMedia?.latest ?? null;
   const fulfilmentItems = fulfilmentLatest?.items ?? [];
   const canReviewFulfilmentMedia = fulfilmentLatest?.status === "PENDING";
+  const isDemo = String(request.source || "").toUpperCase() === "DEMO";
+  const canAdminComplete =
+    (request.status === "ONGOING" || request.status === "IN_PROGRESS") &&
+    String(request.fulfilment?.status || "").toUpperCase() === "STARTED";
 
   const getFulfilmentMediaStatusBadge = (status: string) => {
     switch (status) {
@@ -481,6 +511,7 @@ export const VideoRequestDetails: React.FC = () => {
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Information, location coordinates, chat history, and moderation controls.</p>
           </div>
           <div className="flex items-center gap-4">
+            {isDemo && <Badge variant="info">DEMO</Badge>}
             {getStatusBadge(request.status)}
             
             {request.status === "PENDING" && (
@@ -490,6 +521,20 @@ export const VideoRequestDetails: React.FC = () => {
                 </Button>
                 <Button variant="danger" size="sm" onClick={() => setIsRejectModalOpen(true)} disabled={actionLoading}>
                   <X className="mr-1 h-4 w-4" /> Reject
+                </Button>
+              </div>
+            )}
+
+            {canAdminComplete && (
+              <div className="flex gap-2 ml-4 border-l pl-4 border-gray-200">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleComplete}
+                  isLoading={actionLoading}
+                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                >
+                  <CheckCircle2 className="mr-1 h-4 w-4" /> Complete
                 </Button>
               </div>
             )}
@@ -585,6 +630,22 @@ export const VideoRequestDetails: React.FC = () => {
 
         <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
           <dl className="sm:divide-y sm:divide-gray-200">
+            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Type</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                {isDemo ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Badge variant="info">DEMO</Badge>
+                    <span className="text-gray-600">
+                      Auto-generated shared nearby demo request
+                    </span>
+                  </span>
+                ) : (
+                  <span className="font-medium">USER</span>
+                )}
+              </dd>
+            </div>
+
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Title</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 font-medium">{request.title}</dd>

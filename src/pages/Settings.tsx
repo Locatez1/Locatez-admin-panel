@@ -17,7 +17,7 @@ import { ServiceAreaSettings, ServiceAreaMode, ServiceArea } from "../types";
 import { Switch } from "../components/common/Switch";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
-import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2, Gift, Type } from "lucide-react";
+import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2, Gift, Type, Sparkles } from "lucide-react";
 
 export const Settings: React.FC = () => {
   const { role } = useAuth();
@@ -56,6 +56,8 @@ export const Settings: React.FC = () => {
   const [newDynamicWord, setNewDynamicWord] = useState("");
   const [dynamicWordsSaving, setDynamicWordsSaving] = useState(false);
   const [dynamicWordsError, setDynamicWordsError] = useState<string | null>(null);
+  const [generateDemoDataAfterRegistration, setGenerateDemoDataAfterRegistration] =
+    useState<boolean>(false);
 
   // Chat Settings State
   const [confirmedChatLimit, setConfirmedChatLimit] = useState<number>(50);
@@ -78,6 +80,11 @@ export const Settings: React.FC = () => {
   // Confirmation Modal state for Video Request Approval
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [pendingValue, setPendingValue] = useState<boolean>(false);
+
+  // Confirmation Modal for Generate Demo Data After Registration
+  const [isDemoConfirmOpen, setIsDemoConfirmOpen] = useState<boolean>(false);
+  const [pendingDemoValue, setPendingDemoValue] = useState<boolean>(false);
+  const [demoToggleSaving, setDemoToggleSaving] = useState<boolean>(false);
 
   // Confirmation Modal state for Service Area Mode Switch
   const [isServiceAreaModalOpen, setIsServiceAreaModalOpen] = useState<boolean>(false);
@@ -116,6 +123,7 @@ export const Settings: React.FC = () => {
       setConfirmedMediaRetentionHours(vrData.mediaRetentionHours ?? 48);
       setMediaRetentionHoursInput(String(vrData.mediaRetentionHours ?? 48));
       setMediaRetentionError(null);
+      setGenerateDemoDataAfterRegistration(!!vrData.generateDemoDataAfterRegistration);
 
       if (economyData) {
         setWelcomeBonusEnabled(economyData.welcomeBonusEnabled !== false);
@@ -412,6 +420,39 @@ export const Settings: React.FC = () => {
       toast.error(err.response?.data?.message || "Failed to update media retention hours.");
     } finally {
       setMediaRetentionSaving(false);
+    }
+  };
+
+  const handleDemoToggleClick = (newValue: boolean) => {
+    if (!isAdmin || demoToggleSaving) return;
+    setPendingDemoValue(newValue);
+    setIsDemoConfirmOpen(true);
+  };
+
+  const handleConfirmDemoToggle = async () => {
+    if (!isAdmin || demoToggleSaving) return;
+    const previous = generateDemoDataAfterRegistration;
+    const target = pendingDemoValue;
+    setIsDemoConfirmOpen(false);
+    setGenerateDemoDataAfterRegistration(target);
+    setDemoToggleSaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({
+        generateDemoDataAfterRegistration: target,
+      });
+      setGenerateDemoDataAfterRegistration(!!updated.generateDemoDataAfterRegistration);
+      toast.success(
+        target
+          ? "Demo request generation after registration enabled."
+          : "Demo request generation after registration disabled. Already-scheduled jobs will be skipped."
+      );
+    } catch (err: any) {
+      setGenerateDemoDataAfterRegistration(previous);
+      toast.error(
+        err.response?.data?.message || "Failed to update demo generation setting."
+      );
+    } finally {
+      setDemoToggleSaving(false);
     }
   };
 
@@ -1206,6 +1247,52 @@ export const Settings: React.FC = () => {
 
               <div className="border-t border-gray-100 pt-6 space-y-4">
                 <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-medium text-gray-900">
+                    Generate Demo Requests After Registration
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Automatically generate a shared nearby demo request 30 minutes after a user
+                  registers when no eligible nearby request exists. The request is created by an
+                  admin account so the new user can discover and accept it in Nearby.
+                </p>
+                <div
+                  className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3.5 transition-all duration-200 ${
+                    generateDemoDataAfterRegistration
+                      ? "bg-primary-100/40 border-primary-300 ring-1 ring-primary-300/50 shadow-xs"
+                      : "bg-white border-neutral-200"
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 flex items-center gap-2">
+                      <span>Generate demo data after registration</span>
+                      {generateDemoDataAfterRegistration && (
+                        <span className="text-xs bg-primary-100 text-primary-900 font-semibold px-2 py-0.5 rounded-full border border-primary-300">
+                          Active
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      Uses the existing nearby radius and minimum reward. Disabling skips already
+                      scheduled jobs without creating requests.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={generateDemoDataAfterRegistration}
+                    onChange={handleDemoToggleClick}
+                    disabled={!isAdmin || demoToggleSaving}
+                  />
+                </div>
+                {!isAdmin && (
+                  <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded inline-block font-medium">
+                    Note: As a Moderator, you can view this setting but cannot modify it.
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 space-y-4">
+                <div className="flex items-center gap-2">
                   <Gift className="h-4 w-4 text-primary" />
                   <h3 className="text-base font-medium text-gray-900">Welcome bonus</h3>
                 </div>
@@ -1429,6 +1516,44 @@ export const Settings: React.FC = () => {
               type="button"
               onClick={handleConfirmUpdate}
               isLoading={actionLoading}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Modal for Demo Generation */}
+      <Modal
+        isOpen={isDemoConfirmOpen}
+        onClose={() => !demoToggleSaving && setIsDemoConfirmOpen(false)}
+        title={
+          pendingDemoValue
+            ? "Enable demo requests after registration?"
+            : "Disable demo requests after registration?"
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {pendingDemoValue
+              ? "About 30 minutes after each new USER registers, the worker may create one shared nearby DEMO request if none already exists in range."
+              : "New registrations will no longer schedule demo jobs. Jobs already scheduled will be skipped by the worker and will not create demo requests."}
+          </p>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setIsDemoConfirmOpen(false)}
+              disabled={demoToggleSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="button"
+              onClick={handleConfirmDemoToggle}
+              isLoading={demoToggleSaving}
             >
               Confirm
             </Button>

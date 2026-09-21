@@ -461,7 +461,12 @@ export const VideoRequests: React.FC = () => {
                       ₹{(request.rewardAmount || 0).toFixed(2)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {getStatusBadge(request.status)}
+                      <div className="flex items-center gap-2">
+                        {String(request.source || "").toUpperCase() === "DEMO" && (
+                          <Badge variant="info">DEMO</Badge>
+                        )}
+                        {getStatusBadge(request.status)}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {new Date(request.createdAt).toLocaleDateString()}

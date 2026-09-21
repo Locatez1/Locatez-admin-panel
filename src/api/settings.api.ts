@@ -11,6 +11,7 @@ export interface VideoRequestSettings {
   maxConcurrentAcceptedRequests: number;
   mediaCleanupEnabled: boolean;
   mediaRetentionHours: number;
+  generateDemoDataAfterRegistration: boolean;
 }
 
 export type UpdateVideoRequestSettingsInput = {
@@ -23,6 +24,7 @@ export type UpdateVideoRequestSettingsInput = {
   maxConcurrentAcceptedRequests?: number;
   mediaCleanupEnabled?: boolean;
   mediaRetentionHours?: number;
+  generateDemoDataAfterRegistration?: boolean;
 };
 
 export interface ChatSettings {
@@ -39,6 +41,7 @@ const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   maxConcurrentAcceptedRequests: 3,
   mediaCleanupEnabled: true,
   mediaRetentionHours: 48,
+  generateDemoDataAfterRegistration: false,
 };
 
 const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null => {
@@ -80,6 +83,10 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
       typeof candidate.mediaRetentionHours === "number"
         ? candidate.mediaRetentionHours
         : DEFAULT_VR_SETTINGS.mediaRetentionHours,
+    generateDemoDataAfterRegistration:
+      typeof candidate.generateDemoDataAfterRegistration === "boolean"
+        ? candidate.generateDemoDataAfterRegistration
+        : DEFAULT_VR_SETTINGS.generateDemoDataAfterRegistration,
   };
 };
 

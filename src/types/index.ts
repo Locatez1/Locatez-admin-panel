@@ -145,6 +145,8 @@ export interface VideoRequest {
   category?: Category | { id: string; name: string };
   rewardAmount: number;
   payoutType: string;
+  /** USER (default) or DEMO (auto-generated shared nearby demo). */
+  source?: "USER" | "DEMO" | string;
   status: "PENDING" | "OPEN" | "ACCEPTED" | "ONGOING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED" | "CANCELLED" | "REJECTED";
   createdAt: string;
   isRestrictedArea?: boolean;
