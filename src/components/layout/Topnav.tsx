@@ -45,8 +45,8 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
           </button>
         )}
         <span className="flex items-center gap-1.5 font-bold text-primary-500 text-lg md:hidden">
-          <img src={vyeoLogo} alt="Vyeo" className="h-5 w-auto" />
-          Vyeo
+          <img src={vyeoLogo} alt="Vyeo" className="h-9 w-auto" />
+          Admin
         </span>
       </div>
       <div className="flex items-center space-x-3 sm:space-x-4">
