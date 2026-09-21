@@ -2,6 +2,7 @@ import React from "react";
 import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import vyeoLogo from "../../assets/vyeo-logo.png";
 
 interface TopnavProps {
   onToggleSidebar?: () => void;
@@ -43,7 +44,10 @@ export const Topnav: React.FC<TopnavProps> = ({ onToggleSidebar }) => {
             <Menu className="h-6 w-6" />
           </button>
         )}
-        <span className="font-bold text-primary-500 text-lg md:hidden">Locatez</span>
+        <span className="flex items-center gap-1.5 font-bold text-primary-500 text-lg md:hidden">
+          <img src={vyeoLogo} alt="Vyeo" className="h-5 w-auto" />
+          Vyeo
+        </span>
       </div>
       <div className="flex items-center space-x-3 sm:space-x-4">
         <Link

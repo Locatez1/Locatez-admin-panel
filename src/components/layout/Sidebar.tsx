@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, Video, Tag, Compass, ShieldAlert, MessageSquare, Settings, Store, Lightbulb, MapPin, HelpCircle, Bell, UserRound } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "../../context/AuthContext";
+import vyeoLogo from "../../assets/vyeo-logo.png";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -52,7 +53,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-neutral-200 px-4">
-          <h1 className="text-xl font-bold text-primary-500">Locatez Admin</h1>
+          <div className="flex items-center gap-2">
+            <img src={vyeoLogo} alt="Vyeo" className="h-6 w-auto" />
+            <h1 className="text-xl font-bold text-primary-500">Vyeo Admin</h1>
+          </div>
           {onClose && (
             <button
               onClick={onClose}
