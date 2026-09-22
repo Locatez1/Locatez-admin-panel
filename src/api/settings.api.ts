@@ -12,6 +12,8 @@ export interface VideoRequestSettings {
   mediaCleanupEnabled: boolean;
   mediaRetentionHours: number;
   generateDemoDataAfterRegistration: boolean;
+  demoPoiMinDistanceMeters: number;
+  demoPoiCategories: string[];
 }
 
 export type UpdateVideoRequestSettingsInput = {
@@ -25,6 +27,8 @@ export type UpdateVideoRequestSettingsInput = {
   mediaCleanupEnabled?: boolean;
   mediaRetentionHours?: number;
   generateDemoDataAfterRegistration?: boolean;
+  demoPoiMinDistanceMeters?: number;
+  demoPoiCategories?: string[];
 };
 
 export interface ChatSettings {
@@ -42,6 +46,20 @@ const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   mediaCleanupEnabled: true,
   mediaRetentionHours: 48,
   generateDemoDataAfterRegistration: false,
+  demoPoiMinDistanceMeters: 1000,
+  demoPoiCategories: [
+    "park",
+    "cafe",
+    "coffee",
+    "restaurant",
+    "shopping_mall",
+    "grocery",
+    "supermarket",
+    "hotel",
+    "temple",
+    "museum",
+    "market",
+  ],
 };
 
 const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null => {
@@ -87,6 +105,13 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
       typeof candidate.generateDemoDataAfterRegistration === "boolean"
         ? candidate.generateDemoDataAfterRegistration
         : DEFAULT_VR_SETTINGS.generateDemoDataAfterRegistration,
+    demoPoiMinDistanceMeters:
+      typeof candidate.demoPoiMinDistanceMeters === "number"
+        ? candidate.demoPoiMinDistanceMeters
+        : DEFAULT_VR_SETTINGS.demoPoiMinDistanceMeters,
+    demoPoiCategories: Array.isArray(candidate.demoPoiCategories)
+      ? candidate.demoPoiCategories.filter((c: unknown): c is string => typeof c === "string")
+      : [...DEFAULT_VR_SETTINGS.demoPoiCategories],
   };
 };
 

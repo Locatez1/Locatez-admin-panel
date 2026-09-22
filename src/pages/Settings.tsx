@@ -58,6 +58,15 @@ export const Settings: React.FC = () => {
   const [dynamicWordsError, setDynamicWordsError] = useState<string | null>(null);
   const [generateDemoDataAfterRegistration, setGenerateDemoDataAfterRegistration] =
     useState<boolean>(false);
+  const [confirmedDemoPoiMinDistance, setconfirmedDemoPoiMinDistance] = useState<number>(1000);
+  const [demoPoiMinDistanceInput, setdemoPoiMinDistanceInput] = useState<string>("1000");
+  const [demoPoiDistanceSaving, setDemoPoiDistanceSaving] = useState(false);
+  const [demoPoiDistanceError, setDemoPoiDistanceError] = useState<string | null>(null);
+  const [demoPoiCategories, setDemoPoiCategories] = useState<string[]>([]);
+  const [confirmedDemoPoiCategories, setConfirmedDemoPoiCategories] = useState<string[]>([]);
+  const [newDemoPoiCategory, setNewDemoPoiCategory] = useState("");
+  const [demoPoiCategoriesSaving, setDemoPoiCategoriesSaving] = useState(false);
+  const [demoPoiCategoriesError, setDemoPoiCategoriesError] = useState<string | null>(null);
 
   // Chat Settings State
   const [confirmedChatLimit, setConfirmedChatLimit] = useState<number>(50);
@@ -124,6 +133,13 @@ export const Settings: React.FC = () => {
       setMediaRetentionHoursInput(String(vrData.mediaRetentionHours ?? 48));
       setMediaRetentionError(null);
       setGenerateDemoDataAfterRegistration(!!vrData.generateDemoDataAfterRegistration);
+      setconfirmedDemoPoiMinDistance(vrData.demoPoiMinDistanceMeters ?? 1000);
+      setdemoPoiMinDistanceInput(String(vrData.demoPoiMinDistanceMeters ?? 1000));
+      setDemoPoiDistanceError(null);
+      const cats = Array.isArray(vrData.demoPoiCategories) ? vrData.demoPoiCategories : [];
+      setDemoPoiCategories(cats);
+      setConfirmedDemoPoiCategories(cats);
+      setDemoPoiCategoriesError(null);
 
       if (economyData) {
         setWelcomeBonusEnabled(economyData.welcomeBonusEnabled !== false);
@@ -453,6 +469,83 @@ export const Settings: React.FC = () => {
       );
     } finally {
       setDemoToggleSaving(false);
+    }
+  };
+
+  const validateDemoPoiDistance = (value: string): string | null => {
+    const n = parseInt(value, 10);
+    if (!Number.isInteger(n) || n < 50 || n > 1_000_000) {
+      return "Demo POI min distance must be an integer between 50 and 1000000 meters.";
+    }
+    return null;
+  };
+
+  const handleSaveDemoPoiDistance = async () => {
+    if (!isAdmin || demoPoiDistanceSaving) return;
+    const err = validateDemoPoiDistance(demoPoiMinDistanceInput);
+    if (err) {
+      setDemoPoiDistanceError(err);
+      return;
+    }
+    const meters = parseInt(demoPoiMinDistanceInput, 10);
+    setDemoPoiDistanceSaving(true);
+    setDemoPoiDistanceError(null);
+    try {
+      const updated = await updateVideoRequestSettings({
+        demoPoiMinDistanceMeters: meters,
+      });
+      setconfirmedDemoPoiMinDistance(updated.demoPoiMinDistanceMeters);
+      setdemoPoiMinDistanceInput(String(updated.demoPoiMinDistanceMeters));
+      toast.success("Demo POI min distance updated.");
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to update demo POI distance.");
+    } finally {
+      setDemoPoiDistanceSaving(false);
+    }
+  };
+
+  const normalizeDemoCategory = (raw: string) =>
+    raw.trim().toLowerCase().replace(/\s+/g, "_");
+
+  const handleAddDemoPoiCategory = () => {
+    const cat = normalizeDemoCategory(newDemoPoiCategory);
+    if (!cat) return;
+    if (cat.length > 64) {
+      setDemoPoiCategoriesError("Each category must be at most 64 characters.");
+      return;
+    }
+    if (demoPoiCategories.includes(cat)) {
+      setDemoPoiCategoriesError("That category is already in the list.");
+      return;
+    }
+    if (demoPoiCategories.length >= 50) {
+      setDemoPoiCategoriesError("Maximum 50 categories.");
+      return;
+    }
+    setDemoPoiCategories((prev) => [...prev, cat]);
+    setNewDemoPoiCategory("");
+    setDemoPoiCategoriesError(null);
+  };
+
+  const handleSaveDemoPoiCategories = async () => {
+    if (!isAdmin || demoPoiCategoriesSaving) return;
+    if (demoPoiCategories.length === 0) {
+      setDemoPoiCategoriesError("Add at least one Mapbox POI category.");
+      return;
+    }
+    setDemoPoiCategoriesSaving(true);
+    try {
+      const updated = await updateVideoRequestSettings({
+        demoPoiCategories,
+      });
+      setDemoPoiCategories(updated.demoPoiCategories);
+      setConfirmedDemoPoiCategories(updated.demoPoiCategories);
+      setDemoPoiCategoriesError(null);
+      toast.success("Demo POI categories updated.");
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to update demo POI categories.");
+    } finally {
+      setDemoPoiCategoriesSaving(false);
     }
   };
 
@@ -1274,8 +1367,9 @@ export const Settings: React.FC = () => {
                       )}
                     </p>
                     <p className="text-xs text-neutral-500">
-                      Uses the existing nearby radius and minimum reward. Disabling skips already
-                      scheduled jobs without creating requests.
+                      Places a shared demo pin between the min distance and nearby radius using the
+                      Mapbox categories below. Disabling skips already scheduled jobs without
+                      creating requests.
                     </p>
                   </div>
                   <Switch
@@ -1284,6 +1378,133 @@ export const Settings: React.FC = () => {
                     disabled={!isAdmin || demoToggleSaving}
                   />
                 </div>
+
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label
+                      htmlFor="demo-poi-max-distance"
+                      className="block text-sm font-medium text-gray-900 mb-1"
+                    >
+                      Demo POI min distance (meters)
+                    </label>
+                    <input
+                      id="demo-poi-max-distance"
+                      type="number"
+                      min={50}
+                      max={1_000_000}
+                      step={50}
+                      value={demoPoiMinDistanceInput}
+                      onChange={(e) => {
+                        setdemoPoiMinDistanceInput(e.target.value);
+                        setDemoPoiDistanceError(validateDemoPoiDistance(e.target.value));
+                      }}
+                      className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      disabled={!isAdmin || demoPoiDistanceSaving}
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Default 1000 (1 km). Demo pins are placed between this minimum and the nearby
+                      radius ({confirmedNearbyRadius} m). Must be less than nearby radius.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={
+                      !isAdmin ||
+                      demoPoiDistanceSaving ||
+                      !!demoPoiDistanceError ||
+                      parseInt(demoPoiMinDistanceInput, 10) === confirmedDemoPoiMinDistance
+                    }
+                    isLoading={demoPoiDistanceSaving}
+                    onClick={handleSaveDemoPoiDistance}
+                  >
+                    Save distance
+                  </Button>
+                </div>
+                {demoPoiDistanceError && (
+                  <p className="text-xs text-red-600 font-medium">{demoPoiDistanceError}</p>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-900">
+                    Demo Mapbox POI categories
+                  </label>
+                  <p className="text-xs text-neutral-500">
+                    Mapbox Search Box category ids (e.g. park, cafe, restaurant, temple). Used when
+                    picking the demo location near the user.
+                  </p>
+                  <div className="flex flex-wrap gap-2 min-h-[2rem]">
+                    {demoPoiCategories.map((cat) => (
+                      <span
+                        key={cat}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-800"
+                      >
+                        {cat}
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="text-gray-400 hover:text-red-600 leading-none"
+                            onClick={() =>
+                              setDemoPoiCategories((prev) => prev.filter((c) => c !== cat))
+                            }
+                            disabled={demoPoiCategoriesSaving}
+                            aria-label={`Remove ${cat}`}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                    {demoPoiCategories.length === 0 && (
+                      <span className="text-xs text-gray-400">No categories yet.</span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. park"
+                        value={newDemoPoiCategory}
+                        onChange={(e) => setNewDemoPoiCategory(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddDemoPoiCategory();
+                          }
+                        }}
+                        className="block w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        disabled={demoPoiCategoriesSaving}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleAddDemoPoiCategory}
+                        disabled={demoPoiCategoriesSaving}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        isLoading={demoPoiCategoriesSaving}
+                        disabled={
+                          demoPoiCategoriesSaving ||
+                          demoPoiCategories.length === 0 ||
+                          (demoPoiCategories.length === confirmedDemoPoiCategories.length &&
+                            demoPoiCategories.every((c, i) => c === confirmedDemoPoiCategories[i]))
+                        }
+                        onClick={handleSaveDemoPoiCategories}
+                      >
+                        Save categories
+                      </Button>
+                    </div>
+                  )}
+                  {demoPoiCategoriesError && (
+                    <p className="text-xs text-red-600 font-medium">{demoPoiCategoriesError}</p>
+                  )}
+                </div>
+
                 {!isAdmin && (
                   <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded inline-block font-medium">
                     Note: As a Moderator, you can view this setting but cannot modify it.
