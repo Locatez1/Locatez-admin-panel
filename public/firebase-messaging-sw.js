@@ -3,12 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 const defaultConfig = {
-  apiKey: "AIzaSyDmGYBCeyAUi7BMIXzQtNVQXsQqU_MZaTs",
-  authDomain: "locatez-e6991.firebaseapp.com",
-  projectId: "locatez-e6991",
-  storageBucket: "locatez-e6991.firebasestorage.app",
-  messagingSenderId: "941264005265",
-  appId: "1:941264005265:web:bdd0fcda314125380a7730"
+  apiKey: "AIzaSyAgF5gbH1zw-ZtDNgouGah_t1SFETUiPzI",
+  authDomain: "vyeo-1d565.firebaseapp.com",
+  projectId: "vyeo-1d565",
+  storageBucket: "vyeo-1d565.firebasestorage.app",
+  messagingSenderId: "1014578162023",
+  appId: "1:1014578162023:web:73e7427e2c9b02da93e7c2"
 };
 
 try {
