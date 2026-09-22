@@ -6,6 +6,7 @@ import { Pagination } from "../components/common/Pagination";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
+import { useToast } from "../context/ToastContext";
 import {
   MapPin,
   Video,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 export const PopularPlacesFeed: React.FC = () => {
+  const { toast } = useToast();
   const [places, setPlaces] = useState<PopularPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -360,7 +362,7 @@ export const PopularPlacesFeed: React.FC = () => {
         onClose={() => setIsRequestModalOpen(false)}
         initialData={requestInitialData}
         onSuccess={() => {
-          alert("Video request submitted successfully!");
+          toast.success("Video request submitted successfully!");
         }}
       />
     </div>

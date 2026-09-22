@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
 
 export const Login: React.FC = () => {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export const Login: React.FC = () => {
 
     try {
       await login({ email, password });
+      toast.success("Signed in successfully!", "Welcome Back");
       const storedUserStr = localStorage.getItem("user");
       const loggedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
       const targetPath = from !== "/" ? from : (loggedUser?.role === "USER" ? "/chat-demo" : "/");
@@ -33,6 +36,7 @@ export const Login: React.FC = () => {
         msg = "Netlify proxy session expired. Please refresh the browser page (F5) and sign in again.";
       }
       setError(msg);
+      toast.error(msg, "Login Failed");
     } finally {
       setIsLoading(false);
     }

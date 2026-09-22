@@ -3,6 +3,7 @@ import { UserAvatar } from "../components/common/UserAvatar";
 import { getUsers, createUser, updateUserStatus, deleteUser } from "../api/users.api";
 import { User, UserStatus } from "../types";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { useDebounce } from "../hooks/useDebounce";
 import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
@@ -14,6 +15,7 @@ import { Link } from "react-router-dom";
 import { Search, Eye, Trash2, Ban, CheckCircle, AlertTriangle, MapPin, Filter, X, Shield, RotateCcw } from "lucide-react";
 
 export const Users: React.FC = () => {
+  const { toast } = useToast();
   const { role: currentUserRole } = useAuth();
   const isAdmin = currentUserRole === "ADMIN" || currentUserRole === "SUPERADMIN";
 
@@ -73,11 +75,14 @@ export const Users: React.FC = () => {
     setActionLoading(true);
     try {
       await createUser(formData);
+      toast.success("User created successfully!", "User Created");
       setIsCreateModalOpen(false);
       setFormData({ username: "", email: "", password: "", role: "USER" });
       fetchUsers();
     } catch (err: any) {
-      setFormError(err.response?.data?.message || "Failed to create user");
+      const errMsg = err.response?.data?.message || err.message || "Failed to create user";
+      setFormError(errMsg);
+      toast.error(errMsg, "Creation Failed");
     } finally {
       setActionLoading(false);
     }
@@ -88,10 +93,11 @@ export const Users: React.FC = () => {
     setActionLoading(true);
     try {
       await updateUserStatus(selectedUser.id, actionStatus);
+      toast.success(`User status updated to ${actionStatus}`, "Status Updated");
       setIsStatusModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to update status");
+      toast.error(err.response?.data?.message || "Failed to update status", "Error");
     } finally {
       setActionLoading(false);
     }
@@ -102,10 +108,11 @@ export const Users: React.FC = () => {
     setActionLoading(true);
     try {
       await deleteUser(selectedUser.id);
+      toast.success("User deleted successfully!", "User Deleted");
       setIsDeleteModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete user");
+      toast.error(err.response?.data?.message || "Failed to delete user", "Error");
     } finally {
       setActionLoading(false);
     }

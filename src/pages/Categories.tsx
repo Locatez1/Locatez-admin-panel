@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 import {
   getAdminCategories,
   createCategory,
@@ -34,6 +35,7 @@ import {
 } from "lucide-react";
 
 export const Categories: React.FC = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"categories" | "suggestions">("categories");
 
   // Category State
@@ -100,11 +102,12 @@ export const Categories: React.FC = () => {
     setActionLoading(true);
     try {
       await createCategory({ name: newCategoryName.trim() });
+      toast.success("Category created successfully!", "Category Created");
       setNewCategoryName("");
       setIsCreateModalOpen(false);
       fetchCategories(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to create category");
+      toast.error(err.response?.data?.message || err.message || "Failed to create category", "Error");
     } finally {
       setActionLoading(false);
     }
@@ -115,18 +118,19 @@ export const Categories: React.FC = () => {
     e.preventDefault();
     if (!editingCategory || !editCategoryName.trim()) return;
     if (isProtectedCategory(editingCategory)) {
-      alert("The 'Other' category is system protected and cannot be renamed.");
+      toast.warning("The 'Other' category is system protected and cannot be renamed.", "Protected Category");
       return;
     }
     setActionLoading(true);
     try {
       await updateCategory(editingCategory.id, { name: editCategoryName.trim() });
+      toast.success("Category updated successfully!", "Category Updated");
       setEditingCategory(null);
       setEditCategoryName("");
       setIsEditModalOpen(false);
       fetchCategories(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to update category name");
+      toast.error(err.response?.data?.message || err.message || "Failed to update category name", "Error");
     } finally {
       setActionLoading(false);
     }
@@ -135,7 +139,7 @@ export const Categories: React.FC = () => {
   // 3. Toggle Category Status Handler (PATCH /api/v1/categories/:id/status)
   const handleToggleStatus = async (cat: Category) => {
     if (isProtectedCategory(cat)) {
-      alert("The 'Other' category is system protected and cannot be disabled.");
+      toast.warning("The 'Other' category is system protected and cannot be disabled.", "Protected Category");
       return;
     }
     const targetStatus = !cat.isActive;
@@ -164,8 +168,9 @@ export const Categories: React.FC = () => {
         }
       }
       await updateCategoryStatus(cat.id, targetStatus);
+      toast.success(`Category ${targetStatus ? "enabled" : "disabled"} successfully.`, "Status Updated");
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || `Failed to ${actionText} category`);
+      toast.error(err.response?.data?.message || err.message || `Failed to ${actionText} category`, "Error");
       // Revert optimistic state on error
       setCategories((prev) =>
         prev.map((c) => (c.id === cat.id ? { ...c, isActive: cat.isActive, isFeatured: cat.isFeatured } : c))
@@ -176,16 +181,17 @@ export const Categories: React.FC = () => {
   // Toggle featured for idea/filter chips (PATCH /api/v1/categories/:id/featured)
   const handleToggleFeatured = async (cat: Category, isFeatured: boolean) => {
     if (!cat.isActive && isFeatured) {
-      alert("Inactive categories cannot be featured in idea filters. Please enable the category first.");
+      toast.warning("Inactive categories cannot be featured in idea filters. Please enable the category first.", "Cannot Feature");
       return;
     }
     try {
       await updateCategoryFeatured(cat.id, isFeatured);
+      toast.success(`Category ${isFeatured ? "featured" : "unfeatured"} successfully.`, "Featured Updated");
       setCategories((prev) =>
         prev.map((c) => (c.id === cat.id ? { ...c, isFeatured } : c))
       );
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to update featured flag");
+      toast.error(err.response?.data?.message || err.message || "Failed to update featured flag", "Error");
       fetchCategories();
     }
   };
@@ -197,6 +203,7 @@ export const Categories: React.FC = () => {
     setDeleteError(null);
     try {
       await deleteCategory(deletingCategory.id);
+      toast.success("Category deleted successfully!", "Category Deleted");
       setIsDeleteModalOpen(false);
       setDeletingCategory(null);
       fetchCategories();
@@ -225,10 +232,11 @@ export const Categories: React.FC = () => {
     if (!window.confirm(`Accept AI suggestion "${sug.name}"?`)) return;
     try {
       await acceptCategorySuggestion(sug.id);
+      toast.success(`Accepted suggestion "${sug.name}"`, "Suggestion Accepted");
       fetchSuggestions();
       if (activeTab === "categories") fetchCategories();
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to accept suggestion");
+      toast.error(err.response?.data?.message || err.message || "Failed to accept suggestion", "Error");
     }
   };
 
@@ -237,9 +245,10 @@ export const Categories: React.FC = () => {
     if (!window.confirm(`Reject AI suggestion "${sug.name}"?`)) return;
     try {
       await rejectCategorySuggestion(sug.id);
+      toast.success(`Rejected suggestion "${sug.name}"`, "Suggestion Rejected");
       fetchSuggestions();
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to reject suggestion");
+      toast.error(err.response?.data?.message || err.message || "Failed to reject suggestion", "Error");
     }
   };
 

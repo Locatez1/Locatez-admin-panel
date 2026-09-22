@@ -9,6 +9,7 @@ import { getCategories } from "../../api/categories.api";
 import { getVideoRequestSettings } from "../../api/settings.api";
 import { Category } from "../../types";
 import { Loader2, MapPin, Tag } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
 
 type RequestType = "VIDEO" | "IMAGE";
 
@@ -34,6 +35,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   onSuccess,
   initialData,
 }) => {
+  const { toast } = useToast();
   const [requestType, setRequestType] = useState<RequestType>("VIDEO");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -142,31 +144,32 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || typeof latitude !== "number" || typeof longitude !== "number") {
-      alert("Please fill in title and pick a location on the map.");
+      toast.error("Please fill in title and pick a location on the map.", "Validation Error");
       return;
     }
     if (description.trim().length < 20) {
-      alert("Description must be at least 20 characters.");
+      toast.error("Description must be at least 20 characters.", "Validation Error");
       return;
     }
     if (!categoryId) {
-      alert("Please select a category.");
+      toast.error("Please select a category.", "Validation Error");
       return;
     }
     if (typeof rewardAmount !== "number" || rewardAmount <= 0) {
-      alert("Reward amount must be greater than 0.");
+      toast.error("Reward amount must be greater than 0.", "Validation Error");
       return;
     }
     if (typeof activeMinReward === "number" && rewardAmount < activeMinReward) {
-      alert(
-        `Reward amount must be at least ₹${activeMinReward} for ${requestType.toLowerCase()} requests.`
+      toast.error(
+        `Reward amount must be at least ₹${activeMinReward} for ${requestType.toLowerCase()} requests.`,
+        "Validation Error"
       );
       return;
     }
 
     if (requestType === "VIDEO") {
       if (typeof durationSeconds !== "number" || durationSeconds < 1) {
-        alert("Duration must be at least 1 second.");
+        toast.error("Duration must be at least 1 second.", "Validation Error");
         return;
       }
     } else if (
@@ -174,7 +177,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
       requestedImageCount < 1 ||
       requestedImageCount > 10
     ) {
-      alert("Image count must be between 1 and 10.");
+      toast.error("Image count must be between 1 and 10.", "Validation Error");
       return;
     }
 
@@ -199,6 +202,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
         },
       });
 
+      toast.success("Video request submitted successfully!", "Success");
       onSuccess?.();
       onClose();
     } catch (err: any) {
@@ -219,9 +223,9 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
                 .map((a: any) => (typeof a === "string" ? a : a.name))
                 .join(", ")}.`
             : "";
-        alert(`Locatez is currently available only in selected service areas.${areasListText}`);
+        toast.error(`Locatez is currently available only in selected service areas.${areasListText}`, "Service Restricted");
       } else {
-        alert(errMsg || "Failed to create request");
+        toast.error(errMsg || "Failed to create request", "Error");
       }
     } finally {
       setLoading(false);

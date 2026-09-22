@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useToast } from "../context/ToastContext";
 import {
   getAdminPopularPlaces,
   createPopularPlace,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 
 export const AdminPopularPlaces: React.FC = () => {
+  const { toast } = useToast();
   const [places, setPlaces] = useState<PopularPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -220,8 +222,9 @@ export const AdminPopularPlaces: React.FC = () => {
     try {
       const url = await uploadMedia(file);
       setImageUrl(url);
+      toast.success("Image uploaded successfully!", "Upload Success");
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to upload image file.");
+      toast.error(err.response?.data?.message || err.message || "Failed to upload image file.", "Upload Error");
     } finally {
       setUploadingImage(false);
     }
@@ -247,7 +250,7 @@ export const AdminPopularPlaces: React.FC = () => {
     e.preventDefault();
     const valErr = validateForm();
     if (valErr) {
-      alert(valErr);
+      toast.error(valErr, "Validation Error");
       return;
     }
 
@@ -261,11 +264,12 @@ export const AdminPopularPlaces: React.FC = () => {
         longitude: longitude as number,
         image: imageUrl.trim(),
       });
+      toast.success("Popular place created successfully!", "Place Created");
       setIsCreateModalOpen(false);
       resetForm();
       fetchPlaces();
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to create popular place.");
+      toast.error(err.response?.data?.message || err.message || "Failed to create popular place.", "Error");
     } finally {
       setActionLoading(false);
     }
@@ -278,7 +282,7 @@ export const AdminPopularPlaces: React.FC = () => {
 
     const valErr = validateForm();
     if (valErr) {
-      alert(valErr);
+      toast.error(valErr, "Validation Error");
       return;
     }
 
@@ -292,11 +296,12 @@ export const AdminPopularPlaces: React.FC = () => {
         longitude: longitude as number,
         image: imageUrl.trim(),
       });
+      toast.success("Popular place updated successfully!", "Place Updated");
       setIsEditModalOpen(false);
       resetForm();
       fetchPlaces();
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Failed to update popular place.");
+      toast.error(err.response?.data?.message || err.message || "Failed to update popular place.", "Error");
     } finally {
       setActionLoading(false);
     }
@@ -309,9 +314,10 @@ export const AdminPopularPlaces: React.FC = () => {
 
     try {
       await updatePopularPlaceStatus(place.id, targetStatus);
+      toast.success(`Popular place ${targetStatus ? "enabled" : "disabled"} successfully.`, "Status Updated");
       fetchPlaces();
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || `Failed to ${actionText} popular place.`);
+      toast.error(err.response?.data?.message || err.message || `Failed to ${actionText} popular place.`, "Error");
     }
   };
 
@@ -329,6 +335,7 @@ export const AdminPopularPlaces: React.FC = () => {
     setDeleteError(null);
     try {
       await deletePopularPlace(deletingPlace.id);
+      toast.success("Popular place deleted successfully!", "Place Deleted");
       setIsDeleteModalOpen(false);
       setDeletingPlace(null);
       fetchPlaces();

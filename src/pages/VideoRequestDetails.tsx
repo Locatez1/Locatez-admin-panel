@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 import { getVideoRequestById, approveVideoRequest, rejectVideoRequest, completeVideoRequest } from "../api/videoRequests.api";
 import {
   approveFulfilmentMedia,
@@ -39,6 +40,7 @@ import {
 } from "lucide-react";
 
 export const VideoRequestDetails: React.FC = () => {
+  const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -207,12 +209,13 @@ export const VideoRequestDetails: React.FC = () => {
     setActionLoading(true);
     try {
       await approveVideoRequest(id);
+      toast.success("Video request approved successfully!", "Approved");
       fetchRequest();
     } catch (err: any) {
       if (err.response?.status === 409) {
-        alert("This request was already processed by another moderator/admin.");
+        toast.warning("This request was already processed by another moderator/admin.", "Conflict");
       } else {
-        alert(err.response?.data?.message || "Failed to approve request");
+        toast.error(err.response?.data?.message || "Failed to approve request", "Error");
       }
     } finally {
       setActionLoading(false);
@@ -226,13 +229,14 @@ export const VideoRequestDetails: React.FC = () => {
     setActionLoading(true);
     try {
       await rejectVideoRequest(id, rejectionReason);
+      toast.success("Video request rejected.", "Rejected");
       setIsRejectModalOpen(false);
       fetchRequest();
     } catch (err: any) {
       if (err.response?.status === 409) {
-        alert("This request was already processed by another moderator/admin.");
+        toast.warning("This request was already processed by another moderator/admin.", "Conflict");
       } else {
-        alert(err.response?.data?.message || "Failed to reject request");
+        toast.error(err.response?.data?.message || "Failed to reject request", "Error");
       }
     } finally {
       setActionLoading(false);
@@ -252,12 +256,13 @@ export const VideoRequestDetails: React.FC = () => {
     setActionLoading(true);
     try {
       await completeVideoRequest(id);
+      toast.success("Request marked as completed!", "Completed");
       await fetchRequest();
     } catch (err: any) {
       if (err.response?.status === 409) {
-        alert("This request was already completed by another actor.");
+        toast.warning("This request was already completed by another actor.", "Conflict");
       } else {
-        alert(err.response?.data?.message || "Failed to complete request");
+        toast.error(err.response?.data?.message || "Failed to complete request", "Error");
       }
     } finally {
       setActionLoading(false);
@@ -269,9 +274,10 @@ export const VideoRequestDetails: React.FC = () => {
     setMediaActionLoading(true);
     try {
       await approveFulfilmentMedia(mediaId);
+      toast.success("Fulfilment media approved!", "Approved");
       await fetchRequest();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to approve fulfilment media");
+      toast.error(err.response?.data?.message || "Failed to approve fulfilment media", "Error");
     } finally {
       setMediaActionLoading(false);
     }
@@ -284,11 +290,12 @@ export const VideoRequestDetails: React.FC = () => {
     setMediaActionLoading(true);
     try {
       await rejectFulfilmentMedia(mediaId, mediaRejectionReason.trim());
+      toast.success("Fulfilment media rejected.", "Rejected");
       setIsMediaRejectModalOpen(false);
       setMediaRejectionReason("");
       await fetchRequest();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to reject fulfilment media");
+      toast.error(err.response?.data?.message || "Failed to reject fulfilment media", "Error");
     } finally {
       setMediaActionLoading(false);
     }

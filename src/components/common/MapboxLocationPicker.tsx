@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Search, MapPin, Loader2, Navigation, AlertTriangle, Crosshair, Layers } from "lucide-react";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useToast } from "../../context/ToastContext";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
 
@@ -38,6 +39,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
   onCoordinatesChange,
   onMapboxIdChange,
 }) => {
+  const { toast } = useToast();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -100,7 +102,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
   // Handle Geolocation Request for User's Current GPS Location
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      toast.error("Geolocation is not supported by your browser.", "Location Error");
       return;
     }
 
@@ -122,7 +124,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
       },
       (err) => {
         console.warn("[Geolocation] Error getting position:", err);
-        alert("Unable to retrieve your position. Please grant location permissions in your browser.");
+        toast.error("Unable to retrieve your position. Please grant location permissions in your browser.", "Location Error");
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }

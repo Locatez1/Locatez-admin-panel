@@ -93,6 +93,19 @@ export const ensureFcmToken = async (): Promise<string | null> => {
         const path = payload.data?.path || "";
         const link = payload.data?.link || "";
 
+        // Dispatch in-app Toast notification
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("app-toast", {
+              detail: {
+                title,
+                body,
+                type: "info",
+              },
+            })
+          );
+        }
+
         if ("Notification" in window && Notification.permission === "granted") {
           try {
             const n = new Notification(title, {
