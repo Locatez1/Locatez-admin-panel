@@ -218,9 +218,7 @@ export const AdminPopularPlaces: React.FC = () => {
 
     setUploadingImage(true);
     try {
-      console.log("[Media Upload] Uploading image file:", file.name);
       const url = await uploadMedia(file);
-      console.log("[Media Upload] Received uploaded image URL:", url);
       setImageUrl(url);
     } catch (err: any) {
       alert(err.response?.data?.message || err.message || "Failed to upload image file.");

@@ -61,11 +61,6 @@ export const LiveKitChatDemo: React.FC = () => {
       if (key) {
         setMessagesMap((prev) => {
           const next = new Map(prev);
-          if (next.has(key)) {
-            console.log(`[Socket.IO] Duplicate message ignored: ${key}`);
-          } else {
-            console.log(`[Socket.IO] Incoming real-time message received: ${key}`);
-          }
           next.set(key, incomingMsg);
           return next;
         });
@@ -103,7 +98,6 @@ export const LiveKitChatDemo: React.FC = () => {
 
   const loadMessages = async (chatId: string) => {
     try {
-      console.log("[Chat] Loading historical messages from REST API...");
       const res = await getChatMessages(chatId, 1, 50);
       const list = Array.isArray(res.data) ? res.data : (res.data as any)?.messages || [];
 
@@ -115,7 +109,6 @@ export const LiveKitChatDemo: React.FC = () => {
         });
         return next;
       });
-      console.log(`[Chat] Loaded ${list.length} historical messages.`);
     } catch (err: any) {
       console.error("[Chat] Failed to load historical messages:", err);
     }
@@ -176,7 +169,6 @@ export const LiveKitChatDemo: React.FC = () => {
     setComposerError(null);
 
     const content = inputMessage.trim();
-    console.log("[Chat] Sending REST message...");
 
     try {
       const res = await sendChatMessage(activeRoom.id, content, "TEXT");
@@ -184,7 +176,6 @@ export const LiveKitChatDemo: React.FC = () => {
       const savedMsg = data.message || (data as any);
 
       const msgKey = String(savedMsg.id || (savedMsg as any)._id || (savedMsg as any).clientMsgId || `msg_${Date.now()}`);
-      console.log(`[Chat] REST message persisted successfully: ${msgKey}`);
 
       setActiveRoom((prev) => {
         if (!prev) return null;

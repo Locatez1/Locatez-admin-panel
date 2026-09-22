@@ -40,7 +40,6 @@ export class SocketService {
 
   public connect(token: string): void {
     if (this.socket && this.socket.connected) {
-      console.log("[Socket.IO] Already connected");
       return;
     }
 
@@ -52,7 +51,6 @@ export class SocketService {
     // Strip trailing /api/v1 if present to get server origin
     const serverOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, "");
 
-    console.log("[Socket.IO] Connecting to:", serverOrigin);
     this.setStatus("CONNECTING");
 
     this.socket = io(serverOrigin, {
@@ -66,18 +64,15 @@ export class SocketService {
     });
 
     this.socket.on("connect", () => {
-      console.log("[Socket.IO] Connected with socket ID:", this.socket?.id);
       this.setStatus("CONNECTED");
 
       // Automatically rejoin active room after reconnect
       if (this.currentRoomId) {
-        console.log("[Socket.IO] Rejoining active room after connect:", this.currentRoomId);
         this.socket?.emit("room:join", { chatRoomId: this.currentRoomId });
       }
     });
 
-    this.socket.on("disconnect", (reason) => {
-      console.log("[Socket.IO] Disconnected. Reason:", reason);
+    this.socket.on("disconnect", () => {
       this.setStatus("DISCONNECTED");
     });
 
@@ -87,7 +82,6 @@ export class SocketService {
     });
 
     this.socket.on("message:new", (data: any) => {
-      console.log("[Socket.IO] Received message:new event:", data);
       const message: ChatMessage = data.message || data;
       this.onNewMessageCallbacks.forEach((cb) => cb(message));
     });
@@ -101,7 +95,6 @@ export class SocketService {
     }
 
     this.currentRoomId = chatRoomId;
-    console.log("[Socket.IO] Emitting room:join for chatRoomId:", chatRoomId);
 
     if (this.socket && this.socket.connected) {
       this.socket.emit("room:join", { chatRoomId });
@@ -110,7 +103,6 @@ export class SocketService {
 
   public leaveRoom(chatRoomId: string): void {
     if (!chatRoomId) return;
-    console.log("[Socket.IO] Emitting room:leave for chatRoomId:", chatRoomId);
 
     if (this.socket && this.socket.connected) {
       this.socket.emit("room:leave", { chatRoomId });
@@ -128,7 +120,6 @@ export class SocketService {
     this.currentRoomId = null;
 
     if (this.socket) {
-      console.log("[Socket.IO] Disconnecting socket");
       this.socket.disconnect();
       this.socket = null;
     }

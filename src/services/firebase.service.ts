@@ -57,10 +57,8 @@ export const ensureFcmToken = async (): Promise<string | null> => {
     if (typeof window !== "undefined" && "Notification" in window) {
       let permission = Notification.permission;
       if (permission === "default") {
-        console.log("[FCM] Requesting notification permission...");
         permission = await Notification.requestPermission();
       }
-      console.log(`[FCM] Notification permission status: ${permission}`);
 
       if (permission !== "granted") {
         console.warn("[FCM] Notification permission is not granted. Cannot retrieve FCM token.");
@@ -73,14 +71,12 @@ export const ensureFcmToken = async (): Promise<string | null> => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       try {
         swRegistration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-        console.log("[FCM] Service Worker registered successfully with scope:", swRegistration.scope);
       } catch (swErr) {
         console.warn("[FCM] Service Worker registration failed:", swErr);
       }
     }
 
     // Retrieve FCM Registration Token
-    console.log("[FCM] Fetching FCM Registration Token...");
     const token = await getToken(messagingInstance, {
       vapidKey: vapidKey,
       serviceWorkerRegistration: swRegistration,
@@ -88,15 +84,9 @@ export const ensureFcmToken = async (): Promise<string | null> => {
 
     if (token) {
       currentFcmToken = token;
-      console.log("==================================================");
-      console.log("FCM REGISTRATION TOKEN:");
-      console.log(token);
-      console.log("==================================================");
 
       // Listen for foreground notifications
       onMessage(messagingInstance, (payload) => {
-        console.log("[FCM] Foreground notification received:", payload);
-
         const title = payload.notification?.title || payload.data?.title || "New Notification";
         const body = payload.notification?.body || payload.data?.body || payload.data?.message || payload.data?.content || "";
         const icon = payload.notification?.icon || payload.data?.icon || "/favicon.svg";
@@ -146,14 +136,12 @@ export const ensureFcmToken = async (): Promise<string | null> => {
 export const registerCurrentFcmToken = async (): Promise<boolean> => {
   const authToken = localStorage.getItem("token");
   if (!authToken) {
-    console.log("[FCM] User is not authenticated yet. FCM token registration will defer until login.");
     return false;
   }
 
   // Ensure FCM token is retrieved
   const token = await ensureFcmToken();
   if (!token) {
-    console.warn("[FCM] Unable to register device token: FCM token is null.");
     return false;
   }
 
@@ -172,23 +160,19 @@ export const registerCurrentFcmToken = async (): Promise<boolean> => {
 
   // 1. Skip duplicate call if already registered for this session key
   if (lastRegisteredKey === registrationKey) {
-    console.log("[FCM] FCM token already registered for current session.");
     return true;
   }
 
   // 2. Return in-flight promise if a registration request is already active
   if (registrationPromise) {
-    console.log("[FCM] Registration request already in-flight, reusing active request.");
     return registrationPromise;
   }
 
   // 3. Initiate single registration request with promise lock
   registrationPromise = (async () => {
     try {
-      console.log("[FCM] Registering FCM token with backend...");
       await registerDeviceToken(token);
       lastRegisteredKey = registrationKey;
-      console.log("[FCM] FCM token registered successfully with backend.");
       return true;
     } catch (err: any) {
       lastRegisteredKey = null;
@@ -216,9 +200,7 @@ export const unregisterCurrentFcmToken = async (): Promise<boolean> => {
   }
 
   try {
-    console.log("[FCM] Unregistering FCM token from backend...");
     await unregisterDeviceToken(currentFcmToken);
-    console.log("[FCM] FCM token unregistered successfully from backend.");
     lastRegisteredKey = null;
     return true;
   } catch (err: any) {
@@ -231,7 +213,6 @@ export const unregisterCurrentFcmToken = async (): Promise<boolean> => {
  * Startup initialization for Firebase Messaging
  */
 export const initFirebaseMessaging = async (): Promise<string | null> => {
-  console.log("[FCM] Initializing Firebase Messaging...");
   const token = await ensureFcmToken();
   if (token) {
     await registerCurrentFcmToken();
