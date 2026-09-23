@@ -247,7 +247,7 @@ export const VideoRequestDetails: React.FC = () => {
     if (!id) return;
     if (
       !window.confirm(
-        "Mark this request as completed? This runs the normal completion flow and credits the fulfiller reward from the requester hold."
+        "Mark this DEMO request as completed? This runs the normal completion flow and credits the fulfiller reward from the admin requester hold."
       )
     ) {
       return;
@@ -474,7 +474,9 @@ export const VideoRequestDetails: React.FC = () => {
   const fulfilmentItems = fulfilmentLatest?.items ?? [];
   const canReviewFulfilmentMedia = fulfilmentLatest?.status === "PENDING";
   const isDemo = String(request.source || "").toUpperCase() === "DEMO";
+  // Admin Complete is only for platform DEMO requests (admin-created), not user requests.
   const canAdminComplete =
+    isDemo &&
     (request.status === "ONGOING" || request.status === "IN_PROGRESS") &&
     String(request.fulfilment?.status || "").toUpperCase() === "STARTED";
 
