@@ -296,7 +296,7 @@ export const Faqs: React.FC = () => {
               className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
             >
               <RotateCcw className="h-3 w-3" />
-              Reset Filters
+              Reset Filter
             </button>
           )}
         </div>
