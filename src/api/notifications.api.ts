@@ -18,11 +18,15 @@ export type BroadcastPushPayload = {
   title: string;
   body: string;
   audience: BroadcastAudience;
+  /** When set, send only to these user UUIDs. */
+  userIds?: string[];
   data?: Record<string, string | number | boolean | null>;
 };
 
 export type BroadcastPushResult = {
   audience: BroadcastAudience;
+  targeted: boolean;
+  requestedUserCount: number;
   recipientUserCount: number;
   successCount: number;
   failureCount: number;
