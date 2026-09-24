@@ -296,7 +296,7 @@ export const Faqs: React.FC = () => {
               className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-semibold transition cursor-pointer"
             >
               <RotateCcw className="h-3 w-3" />
-              Reset Filter
+              Reset Filters
             </button>
           )}
         </div>
@@ -353,8 +353,8 @@ export const Faqs: React.FC = () => {
                 type="button"
                 onClick={() => setStatusFilter(st.value as any)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isActive
-                    ? "bg-primary-500 text-white shadow-2xs"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                  ? "bg-primary-500 text-white shadow-2xs"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
                   }`}
               >
                 {st.label}
