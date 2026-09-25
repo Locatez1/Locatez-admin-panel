@@ -40,9 +40,9 @@ export const AdminPopularPlaces: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination & Search State — higher limit so drag-reorder covers the full curated set.
+  // Pagination & Search State — load up to 100 so drag-reorder matches FAQs/Ideas (one list).
   const [page, setPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit] = useState(100);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -138,23 +138,12 @@ export const AdminPopularPlaces: React.FC = () => {
     fetchPlaces();
   }, [page, limit, debouncedSearch]);
 
-  const handleReorder = async (nextPageItems: PopularPlace[]) => {
+  const handleReorder = async (next: PopularPlace[]) => {
     const previous = places;
-    setPlaces(nextPageItems);
+    setPlaces(next);
     try {
-      // Merge this page into the full ordered catalog, then persist.
-      const res = await getAdminPopularPlaces({ page: 1, limit: 100 });
-      const rawData = res.data;
-      let all: PopularPlace[] = [];
-      if (Array.isArray(rawData)) all = rawData;
-      else if (rawData && Array.isArray((rawData as any).items)) all = (rawData as any).items;
-
-      const start = (page - 1) * limit;
-      const merged = [...all];
-      merged.splice(start, nextPageItems.length, ...nextPageItems);
-      await reorderPopularPlaces(merged.map((p) => p.id));
-      toast.success("Display order saved");
-      await fetchPlaces();
+      // Same path as FAQs/Ideas: one PATCH, no pre-fetch / post-refetch (list is already full when drag is enabled).
+      await reorderPopularPlaces(next.map((p) => p.id));
     } catch (err: any) {
       setPlaces(previous);
       toast.error(err.response?.data?.message || err.message || "Failed to save order");

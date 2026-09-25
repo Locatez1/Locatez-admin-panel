@@ -52,12 +52,15 @@ export function SortableTableBody<T extends { id: string }>({
     const [moved] = next.splice(from, 1);
     next.splice(index, 0, moved);
 
-    setSaving(true);
-    try {
-      await onReorder(next);
-    } finally {
-      setSaving(false);
-    }
+    // Fire-and-forget save after parent gets the new order — don't block UI on API.
+    void (async () => {
+      setSaving(true);
+      try {
+        await onReorder(next);
+      } finally {
+        setSaving(false);
+      }
+    })();
   };
 
   const handleDragEnd = () => {
