@@ -73,6 +73,15 @@ export const deletePopularPlace = async (id: string) => {
   return response.data;
 };
 
+/** Bulk drag-reorder — orderedIds[0] shows first in the app. */
+export const reorderPopularPlaces = async (orderedIds: string[]) => {
+  const response = await apiClient.patch<{ success: boolean; data: PopularPlace[] }>(
+    "/admin/popular-places/reorder",
+    { orderedIds }
+  );
+  return response.data;
+};
+
 
 /**
  * Media File Upload (POST /api/v1/media/upload)

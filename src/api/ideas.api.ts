@@ -11,9 +11,10 @@ import {
  * GET /api/v1/admin/ideas?categoryId=<categoryId>&search=<query>
  */
 export const getAdminIdeas = async (params?: GetIdeasParams) => {
-  const cleanParams: Record<string, string> = {};
+  const cleanParams: Record<string, string | number> = {};
   if (params?.categoryId) cleanParams.categoryId = params.categoryId;
   if (params?.search) cleanParams.search = params.search;
+  if (params?.limit) cleanParams.limit = params.limit;
 
   const response = await apiClient.get<{
     success?: boolean;
@@ -65,6 +66,15 @@ export const updateIdea = async (id: string, payload: UpdateIdeaPayload) => {
 export const deleteIdea = async (id: string) => {
   const response = await apiClient.delete<{ success?: boolean; message?: string }>(
     `/admin/ideas/${id}`
+  );
+  return response.data;
+};
+
+/** Bulk drag-reorder — orderedIds[0] shows first in the app. */
+export const reorderIdeas = async (orderedIds: string[]) => {
+  const response = await apiClient.patch<{ success?: boolean; data: Idea[] }>(
+    "/admin/ideas/reorder",
+    { orderedIds }
   );
   return response.data;
 };

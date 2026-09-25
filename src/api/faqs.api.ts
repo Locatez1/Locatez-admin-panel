@@ -56,3 +56,11 @@ export const deleteFaq = async (id: string) => {
   );
   return response.data;
 };
+
+/** Bulk drag-reorder — orderedIds[0] shows first in the app. */
+export const reorderFaqs = async (orderedIds: string[]) => {
+  const response = await apiClient.patch<{ success: boolean; data: Faq[] }>("/admin/faqs/reorder", {
+    orderedIds,
+  });
+  return response.data;
+};

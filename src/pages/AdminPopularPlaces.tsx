@@ -6,6 +6,7 @@ import {
   updatePopularPlace,
   updatePopularPlaceStatus,
   deletePopularPlace,
+  reorderPopularPlaces,
   uploadMedia,
 } from "../api/popularPlaces.api";
 import { PopularPlace } from "../types";
@@ -16,6 +17,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { MapboxLocationPicker } from "../components/common/MapboxLocationPicker";
+import { DragHandle, SortableTableBody } from "../components/common/SortableTableBody";
 import {
   Compass,
   Plus,
@@ -38,13 +40,14 @@ export const AdminPopularPlaces: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination & Search State
+  // Pagination & Search State — higher limit so drag-reorder covers the full curated set.
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(50);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
+  const canDragReorder = !debouncedSearch.trim() && totalPages <= 1;
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -134,6 +137,29 @@ export const AdminPopularPlaces: React.FC = () => {
   useEffect(() => {
     fetchPlaces();
   }, [page, limit, debouncedSearch]);
+
+  const handleReorder = async (nextPageItems: PopularPlace[]) => {
+    const previous = places;
+    setPlaces(nextPageItems);
+    try {
+      // Merge this page into the full ordered catalog, then persist.
+      const res = await getAdminPopularPlaces({ page: 1, limit: 100 });
+      const rawData = res.data;
+      let all: PopularPlace[] = [];
+      if (Array.isArray(rawData)) all = rawData;
+      else if (rawData && Array.isArray((rawData as any).items)) all = (rawData as any).items;
+
+      const start = (page - 1) * limit;
+      const merged = [...all];
+      merged.splice(start, nextPageItems.length, ...nextPageItems);
+      await reorderPopularPlaces(merged.map((p) => p.id));
+      toast.success("Display order saved");
+      await fetchPlaces();
+    } catch (err: any) {
+      setPlaces(previous);
+      toast.error(err.response?.data?.message || err.message || "Failed to save order");
+    }
+  };
 
   const resetForm = () => {
     setName("");
@@ -365,7 +391,7 @@ export const AdminPopularPlaces: React.FC = () => {
             <Compass className="h-6 w-6 text-primary flex-shrink-0" /> Popular Places Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-500">
-            Create, edit, and toggle active status of featured popular locations with Mapbox location selection.
+            Create, edit, and toggle featured locations. Drag rows to set the order shown in the app.
           </p>
         </div>
         <Button onClick={handleOpenCreate} className="self-start sm:self-auto flex items-center gap-1.5 shrink-0">
@@ -427,6 +453,13 @@ export const AdminPopularPlaces: React.FC = () => {
         </div>
       </div>
 
+      {!canDragReorder && places.length > 0 && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+          Clear search{totalPages > 1 ? " (and keep the list on one page)" : ""} to drag-reorder popular
+          places.
+        </div>
+      )}
+
       {/* Main Content Table */}
       {error ? (
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">{error}</div>
@@ -448,7 +481,11 @@ export const AdminPopularPlaces: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-300">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                  <th scope="col" className="py-3.5 pl-3 pr-1 text-left text-sm font-semibold text-gray-900 w-10" />
+                  <th scope="col" className="px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-12">
+                    #
+                  </th>
+                  <th scope="col" className="py-3.5 pl-2 pr-3 text-left text-sm font-semibold text-gray-900">
                     Place Name
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -465,17 +502,27 @@ export const AdminPopularPlaces: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {places.map((place) => (
-                  <tr key={place.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+              <SortableTableBody
+                items={places}
+                disabled={!canDragReorder || actionLoading}
+                onReorder={handleReorder}
+                renderRow={(place, index) => (
+                  <>
+                    <td className="whitespace-nowrap py-4 pl-3 pr-1 text-sm">
+                      <DragHandle disabled={!canDragReorder} />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-4 text-sm text-gray-500 tabular-nums">
+                      {(page - 1) * limit + index + 1}
+                    </td>
+                    <td className="whitespace-nowrap py-4 pl-2 pr-3 text-sm font-medium text-gray-900">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border">
                           <img
                             src={place.image}
                             alt={place.name}
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=100&q=80";
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=100&q=80";
                             }}
                             className="h-full w-full object-cover"
                           />
@@ -531,9 +578,9 @@ export const AdminPopularPlaces: React.FC = () => {
                         </button>
                       </div>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
+                  </>
+                )}
+              />
             </table>
           </div>
           <Pagination

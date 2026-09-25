@@ -77,6 +77,7 @@ export interface PopularPlace {
   latitude: number;
   longitude: number;
   image: string;
+  sortOrder?: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -89,6 +90,7 @@ export interface CreatePopularPlacePayload {
   latitude: number;
   longitude: number;
   image: string;
+  sortOrder?: number;
 }
 
 export interface UpdatePopularPlacePayload {
@@ -98,6 +100,7 @@ export interface UpdatePopularPlacePayload {
   latitude?: number;
   longitude?: number;
   image?: string;
+  sortOrder?: number;
 }
 
 export interface UpdatePopularPlaceStatusPayload {
@@ -338,6 +341,7 @@ export interface Idea {
   state: string;
   categoryId: string;
   category?: Category | { id: string; name: string };
+  sortOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -350,6 +354,7 @@ export interface CreateIdeaPayload {
   city: string;
   state: string;
   categoryId: string;
+  sortOrder?: number;
 }
 
 export interface UpdateIdeaPayload {
@@ -360,11 +365,13 @@ export interface UpdateIdeaPayload {
   city?: string;
   state?: string;
   categoryId?: string;
+  sortOrder?: number;
 }
 
 export interface GetIdeasParams {
   categoryId?: string;
   search?: string;
+  limit?: number;
 }
 
 export type ServiceAreaMode = "PAN_INDIA" | "RESTRICTED";

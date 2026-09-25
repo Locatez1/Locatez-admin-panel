@@ -4,6 +4,7 @@ import {
   createIdea,
   updateIdea,
   deleteIdea,
+  reorderIdeas,
   uploadIdeaMedia,
 } from "../api/ideas.api";
 import { getCategories } from "../api/categories.api";
@@ -14,6 +15,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { CustomSelect } from "../components/common/CustomSelect";
+import { DragHandle, SortableTableBody } from "../components/common/SortableTableBody";
 import {
   Lightbulb,
   Plus,
@@ -66,6 +68,8 @@ export const Ideas: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  const canDragReorder = !debouncedSearchQuery.trim() && !selectedCategoryFilter;
+
   // Load Categories for Dropdowns & Filters (pass type=ideas to fetch idea categories)
   const fetchCategories = useCallback(async () => {
     try {
@@ -85,6 +89,7 @@ export const Ideas: React.FC = () => {
       const res = await getAdminIdeas({
         categoryId: selectedCategoryFilter || undefined,
         search: debouncedSearchQuery.trim() || undefined,
+        limit: 100,
       });
       const list = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
       setIdeas(list);
@@ -102,6 +107,17 @@ export const Ideas: React.FC = () => {
   useEffect(() => {
     fetchIdeas();
   }, [fetchIdeas]);
+
+  const handleReorder = async (next: Idea[]) => {
+    const previous = ideas;
+    setIdeas(next);
+    try {
+      await reorderIdeas(next.map((i) => i.id));
+    } catch (err: any) {
+      setIdeas(previous);
+      setError(err.response?.data?.message || err.message || "Failed to save idea order");
+    }
+  };
 
   // Reset form fields
   const resetForm = () => {
@@ -282,7 +298,7 @@ export const Ideas: React.FC = () => {
             <Lightbulb className="h-6 w-6 text-primary flex-shrink-0" /> Ideas Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-500">
-            Create, search, filter, edit, and manage video request idea suggestions.
+            Create and manage idea suggestions. Drag rows to set the order shown in the app.
           </p>
         </div>
         <Button onClick={handleOpenCreate} className="self-start sm:self-auto flex items-center gap-1.5 shrink-0">
@@ -401,6 +417,12 @@ export const Ideas: React.FC = () => {
       </div>
 
       {/* Main Table / Content List */}
+      {!canDragReorder && ideas.length > 0 && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+          Clear search and category filters to drag-reorder ideas.
+        </div>
+      )}
+
       {error ? (
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
@@ -437,7 +459,11 @@ export const Ideas: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                <th scope="col" className="py-3.5 pl-3 pr-1 text-left text-sm font-semibold text-gray-900 w-10" />
+                <th scope="col" className="px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-12">
+                  #
+                </th>
+                <th scope="col" className="py-3.5 pl-2 pr-3 text-left text-sm font-semibold text-gray-900">
                   Idea / Details
                 </th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -454,13 +480,21 @@ export const Ideas: React.FC = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {ideas.map((idea) => {
+            <SortableTableBody
+              items={ideas}
+              disabled={!canDragReorder || actionLoading}
+              onReorder={handleReorder}
+              renderRow={(idea, index) => {
                 const displayImg = idea.imageUrl || idea.imageKey;
                 return (
-                  <tr key={idea.id} className="hover:bg-gray-50/60 transition">
-                    {/* Image & Title */}
-                    <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                  <>
+                    <td className="whitespace-nowrap py-4 pl-3 pr-1 text-sm">
+                      <DragHandle disabled={!canDragReorder} />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-4 text-sm text-gray-500 tabular-nums">
+                      {index + 1}
+                    </td>
+                    <td className="py-4 pl-2 pr-3 text-sm font-medium text-gray-900">
                       <div className="flex items-start gap-3">
                         <div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200 shadow-xs">
                           {displayImg ? (
@@ -489,21 +523,15 @@ export const Ideas: React.FC = () => {
                         </div>
                       </div>
                     </td>
-
-                    {/* City / State */}
                     <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-600 font-medium">
                       {idea.city}, {idea.state}
                     </td>
-
-                    {/* Category */}
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       <Badge variant="info" className="flex items-center gap-1 w-max">
                         <Tag className="h-3 w-3" />
                         {getCategoryName(idea)}
                       </Badge>
                     </td>
-
-                    {/* Created Date */}
                     <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
                       {idea.createdAt
                         ? new Date(idea.createdAt).toLocaleDateString(undefined, {
@@ -513,8 +541,6 @@ export const Ideas: React.FC = () => {
                           })
                         : "—"}
                     </td>
-
-                    {/* Actions */}
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -532,10 +558,10 @@ export const Ideas: React.FC = () => {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </>
                 );
-              })}
-            </tbody>
+              }}
+            />
           </table>
         </div>
       )}

@@ -3,6 +3,7 @@ import {
   createFaq,
   deleteFaq,
   getAdminFaqs,
+  reorderFaqs,
   updateFaq,
   updateFaqStatus,
   type Faq,
@@ -12,6 +13,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { CustomSelect } from "../components/common/CustomSelect";
+import { DragHandle, SortableTableBody } from "../components/common/SortableTableBody";
 import {
   HelpCircle,
   Plus,
@@ -41,10 +43,11 @@ export const Faqs: React.FC = () => {
 
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [sortOrder, setSortOrder] = useState("0");
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const canDragReorder = !searchQuery.trim() && statusFilter === "all";
 
   const fetchFaqs = useCallback(async () => {
     setLoading(true);
@@ -53,8 +56,7 @@ export const Faqs: React.FC = () => {
       const res = await getAdminFaqs({
         limit: 100,
         search: searchQuery.trim() || undefined,
-        isActive:
-          statusFilter === "all" ? undefined : statusFilter === "active",
+        isActive: statusFilter === "all" ? undefined : statusFilter === "active",
       });
       const list = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
       setFaqs(list);
@@ -72,7 +74,6 @@ export const Faqs: React.FC = () => {
   const resetForm = () => {
     setQuestion("");
     setAnswer("");
-    setSortOrder("0");
     setEditingFaq(null);
     setFormError(null);
   };
@@ -86,7 +87,6 @@ export const Faqs: React.FC = () => {
     setEditingFaq(faq);
     setQuestion(faq.question);
     setAnswer(faq.answer);
-    setSortOrder(String(faq.sortOrder ?? 0));
     setFormError(null);
     setIsEditModalOpen(true);
   };
@@ -100,8 +100,6 @@ export const Faqs: React.FC = () => {
   const validateForm = () => {
     if (!question.trim()) return "Question is required.";
     if (!answer.trim()) return "Answer is required.";
-    const order = Number(sortOrder);
-    if (!Number.isInteger(order) || order < 0) return "Sort order must be a whole number ≥ 0.";
     return null;
   };
 
@@ -115,11 +113,7 @@ export const Faqs: React.FC = () => {
     setActionLoading(true);
     setFormError(null);
     try {
-      await createFaq({
-        question: question.trim(),
-        answer: answer.trim(),
-        sortOrder: parseInt(sortOrder, 10),
-      });
+      await createFaq({ question: question.trim(), answer: answer.trim() });
       setIsCreateModalOpen(false);
       resetForm();
       await fetchFaqs();
@@ -144,7 +138,6 @@ export const Faqs: React.FC = () => {
       await updateFaq(editingFaq.id, {
         question: question.trim(),
         answer: answer.trim(),
-        sortOrder: parseInt(sortOrder, 10),
       });
       setIsEditModalOpen(false);
       resetForm();
@@ -153,6 +146,17 @@ export const Faqs: React.FC = () => {
       setFormError(err.response?.data?.message || err.message || "Failed to update FAQ");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleReorder = async (next: Faq[]) => {
+    const previous = faqs;
+    setFaqs(next);
+    try {
+      await reorderFaqs(next.map((f) => f.id));
+    } catch (err: any) {
+      setFaqs(previous);
+      setError(err.response?.data?.message || err.message || "Failed to save FAQ order");
     }
   };
 
@@ -217,20 +221,9 @@ export const Faqs: React.FC = () => {
           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100"
         />
       </div>
-      <div>
-        <label htmlFor="faq-sort" className="block text-sm font-medium text-gray-700 mb-1">
-          Sort order (lower shows first)
-        </label>
-        <Input
-          id="faq-sort"
-          type="number"
-          min={0}
-          step={1}
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          disabled={actionLoading}
-        />
-      </div>
+      <p className="text-xs text-gray-500">
+        Display order is set by dragging rows in the list (top = shows first in the app).
+      </p>
       <div className="flex justify-end gap-2 pt-2">
         <Button
           type="button"
@@ -260,7 +253,7 @@ export const Faqs: React.FC = () => {
             FAQs
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage help content shown in the mobile app.
+            Manage help content shown in the mobile app. Drag rows to set display order.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -274,7 +267,6 @@ export const Faqs: React.FC = () => {
         </div>
       </div>
 
-      {/* Styled Search & Filter Container Card */}
       <div className="bg-white p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
         <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
           <div className="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wider">
@@ -302,7 +294,6 @@ export const Faqs: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-          {/* Search Input */}
           <div className="relative sm:col-span-8">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
             <input
@@ -323,7 +314,6 @@ export const Faqs: React.FC = () => {
             )}
           </div>
 
-          {/* Status Dropdown */}
           <div className="sm:col-span-4">
             <CustomSelect
               value={statusFilter}
@@ -338,9 +328,10 @@ export const Faqs: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Pill Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
-          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">Status:</span>
+          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mr-1">
+            Status:
+          </span>
           {[
             { label: "All", value: "all" },
             { label: "Active", value: "active" },
@@ -352,10 +343,11 @@ export const Faqs: React.FC = () => {
                 key={st.value}
                 type="button"
                 onClick={() => setStatusFilter(st.value as any)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isActive
-                  ? "bg-primary-500 text-white shadow-2xs"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
-                  }`}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                }`}
               >
                 {st.label}
               </button>
@@ -363,6 +355,12 @@ export const Faqs: React.FC = () => {
           })}
         </div>
       </div>
+
+      {!canDragReorder && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+          Clear search and set status to All to drag-reorder FAQs.
+        </div>
+      )}
 
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 flex items-center gap-2">
@@ -378,24 +376,35 @@ export const Faqs: React.FC = () => {
             <p className="mt-2 text-sm text-gray-500">Loading FAQs…</p>
           </div>
         ) : faqs.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-500">No FAQs yet. Add one to get started.</div>
+          <div className="py-16 text-center text-sm text-gray-500">
+            No FAQs yet. Add one to get started.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Order</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 w-10" />
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">#</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Question</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Answer</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {faqs.map((faq) => (
-                  <tr key={faq.id} className="hover:bg-gray-50/80">
-                    <td className="px-4 py-3 text-sm text-gray-600">{faq.sortOrder}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-xs">{faq.question}</td>
+              <SortableTableBody
+                items={faqs}
+                disabled={!canDragReorder || actionLoading}
+                onReorder={handleReorder}
+                renderRow={(faq, index) => (
+                  <>
+                    <td className="px-3 py-3">
+                      <DragHandle disabled={!canDragReorder} />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 tabular-nums">{index + 1}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-xs">
+                      {faq.question}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-md">
                       <span className="line-clamp-2">{faq.answer}</span>
                     </td>
@@ -413,46 +422,79 @@ export const Faqs: React.FC = () => {
                           disabled={actionLoading}
                           onClick={() => handleToggleStatus(faq)}
                         >
-                          <Power className={`h-3.5 w-3.5 ${faq.isActive ? "text-emerald-600" : "text-amber-600"}`} />
+                          <Power
+                            className={`h-3.5 w-3.5 ${
+                              faq.isActive ? "text-emerald-600" : "text-amber-600"
+                            }`}
+                          />
                         </Button>
                         <Button size="sm" variant="ghost" title="Edit" onClick={() => handleOpenEdit(faq)}>
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="sm" variant="ghost" title="Delete" onClick={() => handleOpenDelete(faq)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Delete"
+                          onClick={() => handleOpenDelete(faq)}
+                        >
                           <Trash2 className="h-3.5 w-3.5 text-red-600" />
                         </Button>
                       </div>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
+                  </>
+                )}
+              />
             </table>
           </div>
         )}
       </div>
 
-      <Modal isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); resetForm(); }} title="Add FAQ">
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetForm();
+        }}
+        title="Add FAQ"
+      >
         {renderForm(handleCreateSubmit, "Create FAQ")}
       </Modal>
 
-      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); resetForm(); }} title="Edit FAQ">
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          resetForm();
+        }}
+        title="Edit FAQ"
+      >
         {renderForm(handleEditSubmit, "Save changes")}
       </Modal>
 
       <Modal
         isOpen={isDeleteModalOpen}
-        onClose={() => { setIsDeleteModalOpen(false); setDeletingFaq(null); }}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingFaq(null);
+        }}
         title="Delete FAQ"
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Delete <strong>{deletingFaq?.question}</strong>? This cannot be undone. Prefer disable if you may reuse it.
+            Delete <strong>{deletingFaq?.question}</strong>? This cannot be undone. Prefer disable
+            if you may reuse it.
           </p>
           {deleteError && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{deleteError}</div>
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+              {deleteError}
+            </div>
           )}
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" disabled={actionLoading} onClick={() => setIsDeleteModalOpen(false)}>
+            <Button
+              variant="ghost"
+              disabled={actionLoading}
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="danger" isLoading={actionLoading} onClick={handleDeleteConfirm}>
