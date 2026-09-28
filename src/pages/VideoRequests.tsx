@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getVideoRequests } from "../api/videoRequests.api";
 import {
   listPendingFulfilmentMedia,
@@ -10,7 +10,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
-import { Eye, AlertTriangle, Plus, MessageSquare, Film, Filter, Search, X, RotateCcw } from "lucide-react";
+import { Eye, AlertTriangle, Plus, MessageSquare, Film, Filter, Search, X, RotateCcw, Clock } from "lucide-react";
 import { useDebounce } from "../hooks/useDebounce";
 
 export const VideoRequests: React.FC = () => {
@@ -24,6 +24,9 @@ export const VideoRequests: React.FC = () => {
   const [pendingMedia, setPendingMedia] = useState<FulfilmentMediaSubmission[]>([]);
   const [pendingMediaLoading, setPendingMediaLoading] = useState(true);
   const [pendingMediaError, setPendingMediaError] = useState<string | null>(null);
+
+  const [pendingRequestsCount, setPendingRequestsCount] = useState<number | null>(null);
+  const requestsListRef = useRef<HTMLDivElement>(null);
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const statusFilter = searchParams.get("status") || "";
@@ -87,8 +90,31 @@ export const VideoRequests: React.FC = () => {
     }
   };
 
+  const fetchPendingRequestsCount = async () => {
+    try {
+      const response = await getVideoRequests({ status: "PENDING", page: 1, limit: 1 });
+      const resData = response.data as any;
+      const list = Array.isArray(resData) ? resData : resData?.items || [];
+      setPendingRequestsCount(
+        resData?.pagination?.total ?? resData?.meta?.total ?? list.length
+      );
+    } catch {
+      setPendingRequestsCount(null);
+    }
+  };
+
+  const handleShowPendingRequests = () => {
+    setSearch("");
+    const nextParams = new URLSearchParams();
+    nextParams.set("status", "PENDING");
+    nextParams.set("page", "1");
+    setSearchParams(nextParams);
+    requestsListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const fetchRequests = async () => {
     setLoading(true);
+    void fetchPendingRequestsCount();
     try {
       const params: any = { page, limit };
       if (statusFilter) params.status = statusFilter;
@@ -226,6 +252,7 @@ export const VideoRequests: React.FC = () => {
         </Button>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <div className="overflow-hidden bg-white shadow-xs sm:rounded-xl border border-yellow-500/30">
         <div className="px-4 py-4 sm:px-6 border-b border-yellow-500/20 bg-yellow-50 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
@@ -282,8 +309,44 @@ export const VideoRequests: React.FC = () => {
         </div>
       </div>
 
+      <button
+        type="button"
+        onClick={handleShowPendingRequests}
+        className={`text-left overflow-hidden bg-white shadow-xs sm:rounded-xl border transition cursor-pointer hover:shadow-sm ${
+          statusFilter.toUpperCase() === "PENDING"
+            ? "border-orange-500 ring-2 ring-orange-500/20"
+            : "border-orange-500/30 hover:border-orange-500/60"
+        }`}
+      >
+        <div className="px-4 py-4 sm:px-6 border-b border-orange-500/20 bg-orange-50 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-orange-900" />
+            <div>
+              <h2 className="text-base font-semibold text-orange-900">
+                Requests awaiting approval
+              </h2>
+              <p className="text-xs text-orange-800">
+                PENDING requests (restricted areas or “Require approval for all” is ON).
+              </p>
+            </div>
+          </div>
+          <Badge variant="warning">
+            {pendingRequestsCount === null ? "—" : pendingRequestsCount} pending
+          </Badge>
+        </div>
+        <div className="p-4 flex items-center justify-between gap-3">
+          <p className="text-3xl font-bold text-gray-900">
+            {pendingRequestsCount === null ? "—" : pendingRequestsCount}
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-900">
+            <Filter className="h-4 w-4" /> Show pending requests
+          </span>
+        </div>
+      </button>
+      </div>
+
       {/* Search & Status Filter Container */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
+      <div ref={requestsListRef} className="bg-white p-3.5 sm:p-4 rounded-xl border border-neutral-200/90 shadow-2xs space-y-3.5">
         <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-neutral-100">
           <div className="flex items-center gap-2 text-neutral-700 text-xs font-bold uppercase tracking-wider">
             <Filter className="h-4 w-4 text-primary-500" />

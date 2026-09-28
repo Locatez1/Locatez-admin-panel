@@ -10,6 +10,7 @@ import { getVideoRequestSettings } from "../../api/settings.api";
 import { Category } from "../../types";
 import { Loader2, MapPin, Tag } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 type RequestType = "VIDEO" | "IMAGE";
 
@@ -36,6 +37,8 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
   initialData,
 }) => {
   const { toast } = useToast();
+  const { role } = useAuth();
+  const isAdmin = role === "ADMIN" || role === "SUPERADMIN";
   const [requestType, setRequestType] = useState<RequestType>("VIDEO");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -159,7 +162,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
       toast.error("Reward amount must be greater than 0.", "Validation Error");
       return;
     }
-    if (typeof activeMinReward === "number" && rewardAmount < activeMinReward) {
+    if (!isAdmin && typeof activeMinReward === "number" && rewardAmount < activeMinReward) {
       toast.error(
         `Reward amount must be at least ₹${activeMinReward} for ${requestType.toLowerCase()} requests.`,
         "Validation Error"
@@ -396,7 +399,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
           id="req-reward"
           type="number"
           step="0.01"
-          min={typeof activeMinReward === "number" ? activeMinReward : undefined}
+          min={!isAdmin && typeof activeMinReward === "number" ? activeMinReward : 0.01}
           label="Reward Amount (₹)"
           placeholder={
             typeof activeMinReward === "number" ? String(activeMinReward) : "15.00"
@@ -416,6 +419,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
             <>
               Minimum reward for {requestType === "IMAGE" ? "image" : "video"} requests:{" "}
               <strong className="text-neutral-800">₹{activeMinReward}</strong>
+              {isAdmin && " (admins can go below this; no wallet balance is held)"}
             </>
           ) : (
             "Minimum reward unavailable."
