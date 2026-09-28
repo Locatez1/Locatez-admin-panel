@@ -388,8 +388,8 @@ export const Ideas: React.FC = () => {
               type="button"
               onClick={() => setSelectedCategoryFilter("")}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${!selectedCategoryFilter
-                  ? "bg-primary-500 text-white shadow-2xs"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                ? "bg-primary-500 text-white shadow-2xs"
+                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
                 }`}
             >
               All
@@ -402,8 +402,8 @@ export const Ideas: React.FC = () => {
                   type="button"
                   onClick={() => setSelectedCategoryFilter(cat.id)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isActive
-                      ? "bg-primary-500 text-white shadow-2xs"
-                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
+                    ? "bg-primary-500 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
                     }`}
                 >
                   {cat.name}
@@ -448,7 +448,7 @@ export const Ideas: React.FC = () => {
               }}
               className="text-xs text-primary"
             >
-              Clear Filter
+              Clear Filters
             </Button>
           )}
         </div>
