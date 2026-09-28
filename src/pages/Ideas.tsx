@@ -387,11 +387,10 @@ export const Ideas: React.FC = () => {
             <button
               type="button"
               onClick={() => setSelectedCategoryFilter("")}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                !selectedCategoryFilter
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${!selectedCategoryFilter
                   ? "bg-primary-500 text-white shadow-2xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
-              }`}
+                }`}
             >
               All
             </button>
@@ -402,11 +401,10 @@ export const Ideas: React.FC = () => {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategoryFilter(cat.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                    isActive
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isActive
                       ? "bg-primary-500 text-white shadow-2xs"
                       : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200/60"
-                  }`}
+                    }`}
                 >
                   {cat.name}
                 </button>
@@ -450,7 +448,7 @@ export const Ideas: React.FC = () => {
               }}
               className="text-xs text-primary"
             >
-              Clear Filters
+              Clear Filter
             </Button>
           )}
         </div>
@@ -535,10 +533,10 @@ export const Ideas: React.FC = () => {
                     <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
                       {idea.createdAt
                         ? new Date(idea.createdAt).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
                         : "—"}
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
