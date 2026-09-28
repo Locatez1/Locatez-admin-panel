@@ -3,7 +3,7 @@ import { Modal } from "../common/Modal";
 import { Input } from "../common/Input";
 import { Button } from "../common/Button";
 import { CustomSelect } from "../common/CustomSelect";
-import { MapboxLocationPicker } from "../common/MapboxLocationPicker";
+import { GoogleLocationPicker } from "../common/GoogleLocationPicker";
 import { createVideoRequest } from "../../api/videoRequests.api";
 import { getCategories } from "../../api/categories.api";
 import { getVideoRequestSettings } from "../../api/settings.api";
@@ -348,7 +348,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
 
         <div>
           <span className="block text-sm font-medium text-neutral-700 mb-2">Location</span>
-          <MapboxLocationPicker
+          <GoogleLocationPicker
             location={address}
             onLocationChange={setAddress}
             latitude={latitude}
@@ -359,7 +359,7 @@ export const CreateVideoRequestModal: React.FC<CreateVideoRequestModalProps> = (
             }}
           />
           <p className="mt-1.5 text-xs text-neutral-500">
-            Search or click the map to set the request pin. Address is filled from Mapbox when
+            Search or click the map to set the request pin. Address is filled from Google Maps when
             possible.
           </p>
         </div>

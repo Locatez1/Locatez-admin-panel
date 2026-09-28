@@ -6,6 +6,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../context/ToastContext";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
+const SEARCH_COUNTRY = "in";
 
 interface MapboxSearchResult {
   id: string;
@@ -26,8 +27,8 @@ interface MapboxLocationPickerProps {
 }
 
 const MAP_STYLES = {
-  streets: "mapbox://styles/mapbox/streets-v12",
-  satellite: "mapbox://styles/mapbox/satellite-streets-v12",
+  streets: "mapbox://styles/mapbox/standard",
+  satellite: "mapbox://styles/mapbox/standard-satellite",
   outdoors: "mapbox://styles/mapbox/outdoors-v12",
 };
 
@@ -148,6 +149,7 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
           style: MAP_STYLES[mapStyle],
           center: [defaultLng, defaultLat],
           zoom: typeof latitude === "number" ? 14 : 11,
+          language: "en",
         });
 
         map.on("load", () => {
@@ -252,16 +254,26 @@ export const MapboxLocationPicker: React.FC<MapboxLocationPickerProps> = ({
       setIsSearching(true);
       try {
         // Fetch from Mapbox Searchbox API v1/suggest & Mapbox v6 Forward Geocoding
+        const filterParams = new URLSearchParams({ country: SEARCH_COUNTRY });
+        if (
+          typeof latitude === "number" &&
+          typeof longitude === "number" &&
+          !isNaN(latitude) &&
+          !isNaN(longitude)
+        ) {
+          filterParams.set("proximity", `${longitude},${latitude}`);
+        }
+
         const [suggestRes, v6Res] = await Promise.allSettled([
           fetch(
             `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(
               cleanQuery
-            )}&access_token=${MAPBOX_TOKEN}&session_token=${sessionTokenRef.current}&language=en&limit=10`
+            )}&access_token=${MAPBOX_TOKEN}&session_token=${sessionTokenRef.current}&language=en&limit=10&${filterParams}`
           ),
           fetch(
             `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(
               cleanQuery
-            )}&access_token=${MAPBOX_TOKEN}&limit=10`
+            )}&access_token=${MAPBOX_TOKEN}&limit=10&${filterParams}`
           ),
         ]);
 

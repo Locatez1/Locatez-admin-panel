@@ -16,7 +16,7 @@ import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
-import { MapboxLocationPicker } from "../components/common/MapboxLocationPicker";
+import { GoogleLocationPicker } from "../components/common/GoogleLocationPicker";
 import { DragHandle, SortableTableBody } from "../components/common/SortableTableBody";
 import {
   Compass,
@@ -180,8 +180,6 @@ export const AdminPopularPlaces: React.FC = () => {
     setLatitude(lat);
     setLongitude(lng);
   };
-
-  const handleMapboxIdChange = (_id: string | null) => {};
 
   const renderImagePicker = (inputId: string) => (
     <div className="space-y-2">
@@ -597,14 +595,13 @@ export const AdminPopularPlaces: React.FC = () => {
             disabled={actionLoading}
           />
 
-          {/* Mapbox Location Selector (derive address & lat/lng, keeping name independent) */}
-          <MapboxLocationPicker
+          {/* Map Location Selector (derive address & lat/lng, keeping name independent) */}
+          <GoogleLocationPicker
             location={location}
             onLocationChange={setLocation}
             latitude={latitude}
             longitude={longitude}
             onCoordinatesChange={handleLocationCoordinatesChange}
-            onMapboxIdChange={handleMapboxIdChange}
           />
 
           <div>
@@ -650,14 +647,13 @@ export const AdminPopularPlaces: React.FC = () => {
             disabled={actionLoading}
           />
 
-          {/* Mapbox Location Selector (preloads coordinates, updates address & lat/lng) */}
-          <MapboxLocationPicker
+          {/* Map Location Selector (preloads coordinates, updates address & lat/lng) */}
+          <GoogleLocationPicker
             location={location}
             onLocationChange={setLocation}
             latitude={latitude}
             longitude={longitude}
             onCoordinatesChange={handleLocationCoordinatesChange}
-            onMapboxIdChange={handleMapboxIdChange}
           />
 
           <div>

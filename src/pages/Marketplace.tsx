@@ -15,7 +15,7 @@ import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { CustomSelect } from "../components/common/CustomSelect";
-import { MapboxLocationPicker } from "../components/common/MapboxLocationPicker";
+import { GoogleLocationPicker } from "../components/common/GoogleLocationPicker";
 import { Pagination } from "../components/common/Pagination";
 import { useToast } from "../context/ToastContext";
 import { useDebounce } from "../hooks/useDebounce";
@@ -852,7 +852,7 @@ export const Marketplace: React.FC = () => {
           </div>
 
           {/* Map Location Selector */}
-          <MapboxLocationPicker
+          <GoogleLocationPicker
             location={locationAddress}
             onLocationChange={setLocationAddress}
             latitude={latitude}
