@@ -25,7 +25,12 @@ export interface UserRatingItem {
   id: string;
   rating: number;
   createdAt: string;
-  request: { id: string; title: string | null; requestType: string | null } | null;
+  request: {
+    id: string;
+    displayId?: string | null;
+    title: string | null;
+    requestType: string | null;
+  } | null;
   requester: { id: string; username: string; fullName: string | null };
 }
 
@@ -137,6 +142,8 @@ export interface VideoRequestParty {
 
 export interface VideoRequest {
   id: string;
+  /** Human-readable id, e.g. TASK-7K3F9QX2. */
+  displayId?: string | null;
   title: string;
   description: string;
   requesterId?: string;
@@ -276,6 +283,7 @@ export interface ChatRoom {
   fulfiller?: VideoRequestParty | User | any;
   videoRequest?: {
     id: string;
+    displayId?: string | null;
     title: string;
     status: string;
   };
@@ -305,6 +313,8 @@ export type MarketplaceStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "ENDED" | "E
 
 export interface MarketplaceStream {
   id: string;
+  /** Human-readable id, e.g. VOD-3P9X2KQ7. */
+  displayId?: string | null;
   title: string;
   description?: string | null;
   price: number;
@@ -342,6 +352,8 @@ export interface MarketplaceStream {
 
 export interface MarketplacePurchase {
   id: string;
+  /** Human-readable order id, e.g. ORD-8H2M4TW9. */
+  displayId?: string | null;
   amount: number;
   purchasedAt: string;
   buyerId?: string;
@@ -437,6 +449,8 @@ export interface Wallet {
 
 export interface WalletTransaction {
   id: string;
+  /** Human-readable id, e.g. TXN-5R7N2PXC. */
+  displayId?: string | null;
   walletId?: string;
   userId: string;
   type: TransactionType;

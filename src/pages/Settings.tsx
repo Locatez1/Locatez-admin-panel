@@ -268,8 +268,11 @@ export const Settings: React.FC = () => {
     if (!Number.isInteger(num) || value.includes(".")) {
       return "Nearby radius must be a whole number (meters).";
     }
-    if (num < 100 || num > 1_000_000) {
-      return "Nearby radius must be between 100 and 1000000 meters.";
+    if (num < 100) {
+      return "Nearby radius must be at least 100 meters.";
+    }
+    if (!Number.isSafeInteger(num)) {
+      return "Nearby radius is too large.";
     }
     return null;
   };

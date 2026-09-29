@@ -21,6 +21,7 @@ export type FulfilmentMediaSubmission = {
   canReview?: boolean;
   videoRequest?: {
     id: string;
+    displayId?: string | null;
     title?: string | null;
     status?: string;
     requestType?: string;

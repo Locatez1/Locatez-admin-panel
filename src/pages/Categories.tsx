@@ -16,6 +16,7 @@ import { Category, CategorySuggestion } from "../types";
 import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
+import { ConfirmModal } from "../components/common/ConfirmModal";
 import { Input } from "../components/common/Input";
 import { Switch } from "../components/common/Switch";
 import {
@@ -59,6 +60,8 @@ export const Categories: React.FC = () => {
   const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+  const [acceptingSuggestion, setAcceptingSuggestion] = useState<CategorySuggestion | null>(null);
+  const [rejectingSuggestion, setRejectingSuggestion] = useState<CategorySuggestion | null>(null);
 
   // Fetch Categories
   const fetchCategories = async (showLoading = true) => {
@@ -228,27 +231,43 @@ export const Categories: React.FC = () => {
   };
 
   // Accept AI Suggestion Handler
-  const handleAcceptSuggestion = async (sug: CategorySuggestion) => {
-    if (!window.confirm(`Accept AI suggestion "${sug.name}"?`)) return;
+  const handleAcceptSuggestion = (sug: CategorySuggestion) => {
+    setAcceptingSuggestion(sug);
+  };
+
+  const handleConfirmAcceptSuggestion = async () => {
+    if (!acceptingSuggestion) return;
+    setActionLoading(true);
     try {
-      await acceptCategorySuggestion(sug.id);
-      toast.success(`Accepted suggestion "${sug.name}"`, "Suggestion Accepted");
+      await acceptCategorySuggestion(acceptingSuggestion.id);
+      toast.success(`Accepted suggestion "${acceptingSuggestion.name}"`, "Suggestion Accepted");
+      setAcceptingSuggestion(null);
       fetchSuggestions();
       if (activeTab === "categories") fetchCategories();
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to accept suggestion", "Error");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   // Reject AI Suggestion Handler
-  const handleRejectSuggestion = async (sug: CategorySuggestion) => {
-    if (!window.confirm(`Reject AI suggestion "${sug.name}"?`)) return;
+  const handleRejectSuggestion = (sug: CategorySuggestion) => {
+    setRejectingSuggestion(sug);
+  };
+
+  const handleConfirmRejectSuggestion = async () => {
+    if (!rejectingSuggestion) return;
+    setActionLoading(true);
     try {
-      await rejectCategorySuggestion(sug.id);
-      toast.success(`Rejected suggestion "${sug.name}"`, "Suggestion Rejected");
+      await rejectCategorySuggestion(rejectingSuggestion.id);
+      toast.success(`Rejected suggestion "${rejectingSuggestion.name}"`, "Suggestion Rejected");
+      setRejectingSuggestion(null);
       fetchSuggestions();
     } catch (err: any) {
       toast.error(err.response?.data?.message || err.message || "Failed to reject suggestion", "Error");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -673,6 +692,29 @@ export const Categories: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Suggestion Confirmation Modals */}
+      <ConfirmModal
+        isOpen={!!acceptingSuggestion}
+        onClose={() => setAcceptingSuggestion(null)}
+        onConfirm={handleConfirmAcceptSuggestion}
+        title="Accept AI Suggestion"
+        description={`Are you sure you want to accept the AI suggested category "${acceptingSuggestion?.name}"?`}
+        variant="success"
+        confirmText="Accept Suggestion"
+        isLoading={actionLoading}
+      />
+
+      <ConfirmModal
+        isOpen={!!rejectingSuggestion}
+        onClose={() => setRejectingSuggestion(null)}
+        onConfirm={handleConfirmRejectSuggestion}
+        title="Reject AI Suggestion"
+        description={`Are you sure you want to reject the AI suggested category "${rejectingSuggestion?.name}"?`}
+        variant="danger"
+        confirmText="Reject Suggestion"
+        isLoading={actionLoading}
+      />
     </div>
   );
 };

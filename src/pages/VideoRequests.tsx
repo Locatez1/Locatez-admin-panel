@@ -7,6 +7,7 @@ import {
 import { VideoRequest } from "../types";
 import { Pagination } from "../components/common/Pagination";
 import { Badge } from "../components/common/Badge";
+import { DisplayId } from "../components/common/DisplayId";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
@@ -129,6 +130,8 @@ export const VideoRequests: React.FC = () => {
         const q = debouncedSearch.trim().toLowerCase();
         rawList = rawList.filter(
           (req) =>
+            req.displayId?.toLowerCase().includes(q) ||
+            req.id === q ||
             req.title?.toLowerCase().includes(q) ||
             req.description?.toLowerCase().includes(q) ||
             req.customLocation?.address?.toLowerCase().includes(q) ||
@@ -287,6 +290,11 @@ export const VideoRequests: React.FC = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {item.videoRequest?.title || "Video request"}
+                      {item.videoRequest?.displayId && (
+                        <span className="ml-2 align-middle">
+                          <DisplayId value={item.videoRequest.displayId} />
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       By {item.submittedBy?.name || item.submittedBy?.username || "fulfiller"}
@@ -376,7 +384,7 @@ export const VideoRequests: React.FC = () => {
           </div>
           <input
             type="text"
-            placeholder="Search requests by title, description, address, category..."
+            placeholder="Search by TASK- ID, title, description, address, user..."
             className="block w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-8 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-neutral-50/50 hover:bg-white focus:bg-white transition"
             value={search}
             onChange={(e) => {
@@ -480,6 +488,11 @@ export const VideoRequests: React.FC = () => {
                       >
                         {request.title}
                       </Link>
+                      {request.displayId && (
+                        <div className="mt-1">
+                          <DisplayId value={request.displayId} />
+                        </div>
+                      )}
                       {request.isRestrictedArea && (
                         <div className="mt-1 flex items-center text-xs text-red-600 font-medium">
                           <AlertTriangle className="mr-1 h-3 w-3" />

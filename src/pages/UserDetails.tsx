@@ -5,6 +5,7 @@ import { getUserById, getUserWallet, getUserTransactions, getUserActivity, getUs
 import { User, Wallet, WalletTransaction, AuditLog, TransactionType, UserRatingsResponse } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
 import { Badge } from "../components/common/Badge";
+import { DisplayId } from "../components/common/DisplayId";
 import { CustomSelect } from "../components/common/CustomSelect";
 import { Button } from "../components/common/Button";
 import { CreateVideoRequestModal } from "../components/videoRequests/CreateVideoRequestModal";
@@ -129,6 +130,7 @@ export const UserDetails: React.FC = () => {
       setTransactions(
         txList.map((t: any) => ({
           id: t.id,
+          displayId: t.displayId ?? null,
           walletId: t.walletId,
           userId: t.userId || id,
           type: t.type,
@@ -214,7 +216,8 @@ export const UserDetails: React.FC = () => {
       const q = debouncedSearchQuery.toLowerCase();
       const matchDesc = tx.description?.toLowerCase().includes(q);
       const matchRef = tx.referenceId?.toLowerCase().includes(q);
-      const matchId = tx.id.toLowerCase().includes(q);
+      const matchId =
+        tx.id.toLowerCase().includes(q) || Boolean(tx.displayId?.toLowerCase().includes(q));
       if (!matchDesc && !matchRef && !matchId) return false;
     }
     return true;
@@ -602,7 +605,7 @@ export const UserDetails: React.FC = () => {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search ledger..."
+                    placeholder="Search ledger (TXN- ID, reference, description)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-8 pr-3 py-1.5 text-xs rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-primary w-40 sm:w-48"
@@ -664,7 +667,13 @@ export const UserDetails: React.FC = () => {
                       const isPositive = ["CREDIT", "REWARD", "REFUND", "DEPOSIT", "RELEASE"].includes(tx.type);
                       return (
                         <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors">
-                          <td className="px-4 py-3.5 text-xs font-mono text-gray-800 font-semibold">{tx.id}</td>
+                          <td className="px-4 py-3.5 text-xs font-mono text-gray-800 font-semibold">
+                            {tx.displayId ? (
+                              <DisplayId value={tx.displayId} />
+                            ) : (
+                              tx.id
+                            )}
+                          </td>
                           <td className="px-4 py-3.5 text-xs">{getTransactionBadge(tx.type)}</td>
                           <td className={`px-4 py-3.5 text-xs font-semibold font-mono ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
                             {isPositive ? "+" : "-"} ₹{Math.abs(tx.amount).toFixed(2)}
@@ -880,12 +889,19 @@ export const UserDetails: React.FC = () => {
                             </td>
                             <td className="px-4 py-3.5 text-xs text-gray-700">
                               {r.request ? (
-                                <Link to={`/video-requests/${r.request.id}`} className="hover:underline">
-                                  {r.request.title || "Untitled request"}
-                                  {r.request.requestType && (
-                                    <span className="ml-1.5 text-[10px] text-gray-400">{r.request.requestType}</span>
+                                <>
+                                  <Link to={`/video-requests/${r.request.id}`} className="hover:underline">
+                                    {r.request.title || "Untitled request"}
+                                    {r.request.requestType && (
+                                      <span className="ml-1.5 text-[10px] text-gray-400">{r.request.requestType}</span>
+                                    )}
+                                  </Link>
+                                  {r.request.displayId && (
+                                    <div className="mt-1">
+                                      <DisplayId value={r.request.displayId} />
+                                    </div>
                                   )}
-                                </Link>
+                                </>
                               ) : (
                                 "—"
                               )}

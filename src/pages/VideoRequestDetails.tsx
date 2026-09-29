@@ -15,8 +15,10 @@ import {
 import { VideoRequest, ChatRoom, ChatMessage } from "../types";
 import { ChatMessageContent } from "../components/common/ChatMessageContent";
 import { Badge } from "../components/common/Badge";
+import { DisplayId } from "../components/common/DisplayId";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
+import { ConfirmModal } from "../components/common/ConfirmModal";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -56,6 +58,11 @@ export const VideoRequestDetails: React.FC = () => {
   const [isMediaRejectModalOpen, setIsMediaRejectModalOpen] = useState(false);
   const [mediaRejectionReason, setMediaRejectionReason] = useState("");
   const [mediaActionLoading, setMediaActionLoading] = useState(false);
+
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [isMediaApproveModalOpen, setIsMediaApproveModalOpen] = useState(false);
+  const [pendingMediaId, setPendingMediaId] = useState<string | null>(null);
 
   // Video State
   const [chatVideoUrl, setChatVideoUrl] = useState<string | null>(null);
@@ -202,14 +209,18 @@ export const VideoRequestDetails: React.FC = () => {
     fetchRequest();
   }, [id]);
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
     if (!id) return;
-    if (!window.confirm("Are you sure you want to approve this video request?")) return;
-    
+    setIsApproveModalOpen(true);
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!id) return;
     setActionLoading(true);
     try {
       await approveVideoRequest(id);
       toast.success("Video request approved successfully!", "Approved");
+      setIsApproveModalOpen(false);
       fetchRequest();
     } catch (err: any) {
       if (err.response?.status === 409) {
@@ -243,20 +254,18 @@ export const VideoRequestDetails: React.FC = () => {
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (!id) return;
-    if (
-      !window.confirm(
-        "Mark this DEMO request as completed? This runs the normal completion flow and credits the fulfiller reward from the admin requester hold."
-      )
-    ) {
-      return;
-    }
+    setIsCompleteModalOpen(true);
+  };
 
+  const handleConfirmComplete = async () => {
+    if (!id) return;
     setActionLoading(true);
     try {
       await completeVideoRequest(id);
       toast.success("Request marked as completed!", "Completed");
+      setIsCompleteModalOpen(false);
       await fetchRequest();
     } catch (err: any) {
       if (err.response?.status === 409) {
@@ -269,12 +278,19 @@ export const VideoRequestDetails: React.FC = () => {
     }
   };
 
-  const handleApproveFulfilmentMedia = async (mediaId: string) => {
-    if (!window.confirm("Approve this fulfilment media and deliver it to the requester?")) return;
+  const handleApproveFulfilmentMedia = (mediaId: string) => {
+    setPendingMediaId(mediaId);
+    setIsMediaApproveModalOpen(true);
+  };
+
+  const handleConfirmApproveMedia = async () => {
+    if (!pendingMediaId) return;
     setMediaActionLoading(true);
     try {
-      await approveFulfilmentMedia(mediaId);
+      await approveFulfilmentMedia(pendingMediaId);
       toast.success("Fulfilment media approved!", "Approved");
+      setIsMediaApproveModalOpen(false);
+      setPendingMediaId(null);
       await fetchRequest();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to approve fulfilment media", "Error");
@@ -639,6 +655,15 @@ export const VideoRequestDetails: React.FC = () => {
 
         <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
           <dl className="sm:divide-y sm:divide-gray-200">
+            {request.displayId && (
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Task ID</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  <DisplayId value={request.displayId} className="text-xs" />
+                </dd>
+              </div>
+            )}
+
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Type</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
@@ -1352,6 +1377,40 @@ export const VideoRequestDetails: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Confirmation Modals for Approval and Completion */}
+      <ConfirmModal
+        isOpen={isApproveModalOpen}
+        onClose={() => setIsApproveModalOpen(false)}
+        onConfirm={handleConfirmApprove}
+        title="Approve Video Request"
+        description="Are you sure you want to approve this video request? This action will mark the request as approved and allow fulfillers to accept it."
+        variant="success"
+        confirmText="Approve Request"
+        isLoading={actionLoading}
+      />
+
+      <ConfirmModal
+        isOpen={isCompleteModalOpen}
+        onClose={() => setIsCompleteModalOpen(false)}
+        onConfirm={handleConfirmComplete}
+        title="Complete Video Request"
+        description="Mark this DEMO request as completed? This runs the normal completion flow and credits the fulfiller reward from the admin requester hold."
+        variant="success"
+        confirmText="Complete Request"
+        isLoading={actionLoading}
+      />
+
+      <ConfirmModal
+        isOpen={isMediaApproveModalOpen}
+        onClose={() => setIsMediaApproveModalOpen(false)}
+        onConfirm={handleConfirmApproveMedia}
+        title="Approve Fulfilment Media"
+        description="Approve this fulfilment media and deliver it to the requester? This action will deliver the media file to the user."
+        variant="success"
+        confirmText="Approve Media"
+        isLoading={mediaActionLoading}
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import { getCategories } from "../api/categories.api";
 import { uploadMediaFile } from "../api/popularPlaces.api";
 import { MarketplaceStream, Category } from "../types";
 import { Badge } from "../components/common/Badge";
+import { DisplayId } from "../components/common/DisplayId";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
@@ -463,7 +464,7 @@ export const Marketplace: React.FC = () => {
                 <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
-                  placeholder="Search listings by title, location, or description..."
+                  placeholder="Search by VOD- ID, title, location, or description..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -615,6 +616,11 @@ export const Marketplace: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-bold text-gray-900 line-clamp-1">{stream.title}</p>
+                              {stream.displayId && (
+                                <div className="my-0.5">
+                                  <DisplayId value={stream.displayId} />
+                                </div>
+                              )}
                               <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">
                                 {stream.description || "No description provided."}
                               </p>
@@ -941,6 +947,13 @@ export const Marketplace: React.FC = () => {
             )}
 
             <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs">
+              {selectedStream.displayId && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 font-medium">VOD ID:</span>
+                  <DisplayId value={selectedStream.displayId} />
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 font-medium">Price:</span>
                 <span className="font-bold text-indigo-600 text-base">₹{(selectedStream.price || 0).toFixed(2)}</span>
