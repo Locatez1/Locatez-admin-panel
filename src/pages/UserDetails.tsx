@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { UserAvatar } from "../components/common/UserAvatar";
 import { useParams, Link, useSearchParams } from "react-router-dom";
-import { getUserById, getUserWallet, getUserTransactions, getUserActivity } from "../api/users.api";
-import { User, Wallet, WalletTransaction, AuditLog, TransactionType } from "../types";
+import { getUserById, getUserWallet, getUserTransactions, getUserActivity, getUserRatings } from "../api/users.api";
+import { User, Wallet, WalletTransaction, AuditLog, TransactionType, UserRatingsResponse } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
 import { Badge } from "../components/common/Badge";
 import { CustomSelect } from "../components/common/CustomSelect";
@@ -21,12 +21,33 @@ import {
   CreditCard,
   MapPin,
   Plus,
+  Star,
 } from "lucide-react";
+
+const StarRow: React.FC<{ value: number | null; size?: string }> = ({ value, size = "h-4 w-4" }) => (
+  <span className="inline-flex items-center gap-0.5">
+    {[1, 2, 3, 4, 5].map((n) => {
+      const fill = value == null ? 0 : Math.max(0, Math.min(1, value - (n - 1)));
+      return (
+        <span key={n} className={`relative inline-block ${size}`}>
+          <Star className={`absolute inset-0 ${size} text-gray-300`} />
+          {fill > 0 && (
+            <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+              <Star className={`${size} text-amber-400 fill-amber-400`} />
+            </span>
+          )}
+        </span>
+      );
+    })}
+  </span>
+);
+
+const RATINGS_PAGE_SIZE = 20;
 
 export const UserDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"profile" | "wallet" | "activity">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "wallet" | "activity" | "ratings">("profile");
 
   // User State
   const [user, setUser] = useState<User | null>(null);
@@ -47,6 +68,27 @@ export const UserDetails: React.FC = () => {
   const [activities, setActivities] = useState<AuditLog[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
+
+  // Ratings State
+  const [ratings, setRatings] = useState<UserRatingsResponse | null>(null);
+  const [ratingsPage, setRatingsPage] = useState(1);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
+
+  const fetchRatings = async (page = ratingsPage) => {
+    if (!id) return;
+    setRatingsLoading(true);
+    setRatingsError(null);
+    try {
+      const res = await getUserRatings(id, { page, limit: RATINGS_PAGE_SIZE });
+      setRatings(res.data);
+      setRatingsPage(page);
+    } catch (err: any) {
+      setRatingsError(err.response?.data?.message || err.message || "Failed to fetch ratings");
+    } finally {
+      setRatingsLoading(false);
+    }
+  };
 
   const fetchUser = async () => {
     if (!id) return;
@@ -127,6 +169,10 @@ export const UserDetails: React.FC = () => {
 
   useEffect(() => {
     fetchUser();
+    setRatings(null);
+    setRatingsError(null);
+    setRatingsPage(1);
+    setActiveTab("profile");
   }, [id]);
 
   const userLat = useMemo(() => {
@@ -154,6 +200,8 @@ export const UserDetails: React.FC = () => {
       fetchWallet();
     } else if (activeTab === "activity" && activities.length === 0 && !activityError && !activityLoading) {
       fetchActivity();
+    } else if (activeTab === "ratings" && !ratings && !ratingsError && !ratingsLoading) {
+      fetchRatings(1);
     }
   }, [activeTab, id]);
 
@@ -264,6 +312,23 @@ export const UserDetails: React.FC = () => {
             <Activity className="h-4 w-4" />
             User Activity & Logs
           </button>
+
+          <button
+            onClick={() => setActiveTab("ratings")}
+            className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === "ratings"
+                ? "border-primary text-primary"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <Star className="h-4 w-4" />
+            Ratings
+            {(user.profile?.ratingCount ?? 0) > 0 && (
+              <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5">
+                {user.profile?.ratingCount}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
 
@@ -356,6 +421,30 @@ export const UserDetails: React.FC = () => {
                 <dt className="text-sm font-medium text-gray-500">Role</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                   <Badge variant="info">{user.role}</Badge>
+                </dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Star className="h-3.5 w-3.5" /> Creator Rating
+                  </span>
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  {(user.profile?.ratingCount ?? 0) > 0 && user.profile?.averageRating != null ? (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("ratings")}
+                      className="inline-flex items-center gap-2 hover:underline cursor-pointer"
+                    >
+                      <StarRow value={user.profile.averageRating} />
+                      <span className="font-semibold">{user.profile.averageRating.toFixed(2)}</span>
+                      <span className="text-gray-500">
+                        ({user.profile.ratingCount} {user.profile.ratingCount === 1 ? "rating" : "ratings"})
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="text-gray-400">No ratings yet</span>
+                  )}
                 </dd>
               </div>
               <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
@@ -690,6 +779,154 @@ export const UserDetails: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* TAB 4: Ratings received as creator */}
+      {activeTab === "ratings" && (
+        <div className="space-y-6">
+          {ratingsError && (
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {ratingsError}
+            </div>
+          )}
+
+          {ratingsLoading && !ratings ? (
+            <div className="py-12 text-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
+              <p className="mt-2 text-xs text-gray-500">Loading ratings...</p>
+            </div>
+          ) : ratings ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Average Rating</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
+                    {ratings.summary.averageRating != null ? ratings.summary.averageRating.toFixed(2) : "—"}
+                  </p>
+                  <div className="mt-2">
+                    <StarRow value={ratings.summary.averageRating} size="h-5 w-5" />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {ratings.summary.ratingCount} {ratings.summary.ratingCount === 1 ? "rating" : "ratings"} received as creator
+                  </p>
+                </div>
+
+                <div className="md:col-span-2 bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Distribution</p>
+                  <div className="space-y-2">
+                    {(["5", "4", "3", "2", "1"] as const).map((star) => {
+                      const count = ratings.summary.distribution[star] ?? 0;
+                      const pct = ratings.summary.ratingCount > 0 ? (count / ratings.summary.ratingCount) * 100 : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-3 text-xs">
+                          <span className="w-8 inline-flex items-center gap-0.5 text-gray-700 font-medium">
+                            {star} <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                          </span>
+                          <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="w-10 text-right text-gray-500">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white shadow sm:rounded-lg border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                      <Star className="h-4 w-4 text-primary" />
+                      Ratings Received
+                    </h3>
+                    <p className="text-xs text-gray-500">Given by requesters after their request was completed.</p>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => fetchRatings(ratingsPage)} isLoading={ratingsLoading}>
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                {ratings.items.length === 0 ? (
+                  <div className="py-12 text-center text-gray-500 text-sm">This user has not received any ratings yet.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Rating</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Rated By</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Request</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {ratings.items.map((r) => (
+                          <tr key={r.id} className="hover:bg-gray-50/80 transition-colors">
+                            <td className="px-4 py-3.5 text-xs whitespace-nowrap">
+                              <span className="inline-flex items-center gap-2">
+                                <StarRow value={r.rating} size="h-3.5 w-3.5" />
+                                <span className="font-semibold text-gray-800">{r.rating}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-gray-700">
+                              <Link to={`/users/${r.requester.id}`} className="hover:underline font-medium">
+                                {r.requester.fullName || r.requester.username}
+                              </Link>
+                              <span className="block text-gray-400">@{r.requester.username}</span>
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-gray-700">
+                              {r.request ? (
+                                <Link to={`/video-requests/${r.request.id}`} className="hover:underline">
+                                  {r.request.title || "Untitled request"}
+                                  {r.request.requestType && (
+                                    <span className="ml-1.5 text-[10px] text-gray-400">{r.request.requestType}</span>
+                                  )}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-gray-500 whitespace-nowrap">
+                              {new Date(r.createdAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {ratings.meta.totalPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 text-xs text-gray-600">
+                    <span>
+                      Page {ratings.meta.page} of {ratings.meta.totalPages}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={ratings.meta.page <= 1 || ratingsLoading}
+                        onClick={() => fetchRatings(ratings.meta.page - 1)}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={ratings.meta.page >= ratings.meta.totalPages || ratingsLoading}
+                        onClick={() => fetchRatings(ratings.meta.page + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           ) : null}
         </div>
       )}

@@ -16,6 +16,27 @@ export interface UserProfile {
   pincode?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  /** Average of ratings received as a creator (null when no ratings). */
+  averageRating?: number | null;
+  ratingCount?: number;
+}
+
+export interface UserRatingItem {
+  id: string;
+  rating: number;
+  createdAt: string;
+  request: { id: string; title: string | null; requestType: string | null } | null;
+  requester: { id: string; username: string; fullName: string | null };
+}
+
+export interface UserRatingsResponse {
+  summary: {
+    averageRating: number | null;
+    ratingCount: number;
+    distribution: Record<"1" | "2" | "3" | "4" | "5", number>;
+  };
+  items: UserRatingItem[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export interface User {

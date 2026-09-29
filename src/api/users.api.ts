@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { PaginatedResponse, User, Wallet, WalletTransaction, AuditLog } from "../types";
+import { PaginatedResponse, User, Wallet, WalletTransaction, AuditLog, UserRatingsResponse } from "../types";
 
 export const getUsers = async (params: any) => {
   const response = await apiClient.get<PaginatedResponse<User>>("/users", { params });
@@ -36,6 +36,14 @@ export const getUserTransactions = async (userId: string, params?: any) => {
     success: boolean;
     data: WalletTransaction[] | { items: WalletTransaction[]; pagination?: any; meta?: any };
   }>(`/users/${userId}/transactions`, { params });
+  return response.data;
+};
+
+export const getUserRatings = async (userId: string, params?: { page?: number; limit?: number }) => {
+  const response = await apiClient.get<{ success: boolean; data: UserRatingsResponse }>(
+    `/users/${userId}/ratings`,
+    { params }
+  );
   return response.data;
 };
 
