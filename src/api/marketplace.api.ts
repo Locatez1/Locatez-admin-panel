@@ -21,6 +21,24 @@ export interface CreateMarketplaceStreamInput {
 /**
  * Fetch list of Marketplace VOD Streams (GET /api/v1/marketplace/streams)
  */
+export interface MarketplaceStats {
+  total: number;
+  pending: number;
+  published: number;
+  expired: number;
+  cancelled: number;
+  completedSales: number;
+  salesAmount: number;
+}
+
+/** Admin/moderator overview counts across all listings (GET /marketplace/streams/stats). */
+export const getMarketplaceStats = async () => {
+  const response = await apiClient.get<{ success: boolean; data: MarketplaceStats }>(
+    "/marketplace/streams/stats"
+  );
+  return response.data.data;
+};
+
 export const getMarketplaceStreams = async (params?: any) => {
   const response = await apiClient.get<{
     success: boolean;

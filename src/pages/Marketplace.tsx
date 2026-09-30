@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   getMarketplaceStreams,
+  getMarketplaceStats,
+  type MarketplaceStats,
   createMarketplaceStream,
   getMarketplacePlaybackAccess,
   approveMarketplaceStream,
@@ -50,6 +52,7 @@ export const Marketplace: React.FC = () => {
   const [streams, setStreams] = useState<MarketplaceStream[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<MarketplaceStats | null>(null);
 
   // Pagination & Filters
   const [page, setPage] = useState(1);
@@ -112,9 +115,18 @@ export const Marketplace: React.FC = () => {
   };
 
   // Fetch Streams
+  const fetchStats = async () => {
+    try {
+      setStats(await getMarketplaceStats());
+    } catch (err) {
+      console.warn("Failed to load marketplace stats", err);
+    }
+  };
+
   const fetchStreams = async () => {
     setLoading(true);
     setError(null);
+    void fetchStats();
     try {
       const params: any = { page, limit, sort: sortFilter };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -360,7 +372,7 @@ export const Marketplace: React.FC = () => {
   const fallbackThumb =
     "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80";
 
-  const pendingCount = streams.filter((s) => s.status === "PENDING").length;
+  const statValue = (n: number | undefined) => (n == null ? "—" : n.toLocaleString("en-IN"));
 
   return (
     <div className="space-y-6">
@@ -387,7 +399,7 @@ export const Marketplace: React.FC = () => {
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Total Listings</p>
-            <p className="text-lg font-bold text-gray-900">{total}</p>
+            <p className="text-lg font-bold text-gray-900">{statValue(stats?.total)}</p>
           </div>
         </div>
 
@@ -397,7 +409,7 @@ export const Marketplace: React.FC = () => {
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Pending Approval</p>
-            <p className="text-lg font-bold text-yellow-900">{pendingCount}</p>
+            <p className="text-lg font-bold text-yellow-900">{statValue(stats?.pending)}</p>
           </div>
         </div>
 
@@ -407,9 +419,7 @@ export const Marketplace: React.FC = () => {
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Published VODs</p>
-            <p className="text-lg font-bold text-gray-900">
-              {streams.filter((s) => s.status === "PUBLISHED" || (s.status as string) === "LIVE").length}
-            </p>
+            <p className="text-lg font-bold text-gray-900">{statValue(stats?.published)}</p>
           </div>
         </div>
 
@@ -419,9 +429,10 @@ export const Marketplace: React.FC = () => {
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Completed Sales</p>
-            <p className="text-lg font-bold text-gray-900">
-              {streams.reduce((acc, curr) => acc + (curr.purchaseCount || 0), 0)}
-            </p>
+            <p className="text-lg font-bold text-gray-900">{statValue(stats?.completedSales)}</p>
+            {stats && stats.salesAmount > 0 && (
+              <p className="text-[11px] text-gray-500">₹{stats.salesAmount.toLocaleString("en-IN")}</p>
+            )}
           </div>
         </div>
       </div>
