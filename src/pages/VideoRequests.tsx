@@ -240,6 +240,36 @@ export const VideoRequests: React.FC = () => {
     }
   };
 
+  const getExpiryDisplay = (req: VideoRequest) => {
+    const expiryRaw =
+      req.expiresAt ||
+      req.expiresAtIst ||
+      (req as any).expiredAt ||
+      (req as any).expireDate ||
+      req.fulfilmentMedia?.latest?.pendingExpiresAtIst ||
+      req.fulfilmentMedia?.latest?.pendingExpiresAt;
+
+    if (!expiryRaw) return <span className="text-gray-400 font-mono text-xs">-</span>;
+
+    const expiryDate = new Date(expiryRaw);
+    if (isNaN(expiryDate.getTime())) {
+      return <span className="text-gray-600 text-xs">{String(expiryRaw)}</span>;
+    }
+
+    const isExpired = expiryDate.getTime() < Date.now() || req.status === "EXPIRED";
+
+    return (
+      <div className="flex flex-col text-xs whitespace-nowrap">
+        <span className={isExpired ? "text-amber-700 font-medium" : "text-gray-700 font-medium"}>
+          {expiryDate.toLocaleDateString()}
+        </span>
+        <span className="text-[11px] text-gray-400">
+          {expiryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -453,6 +483,9 @@ export const VideoRequests: React.FC = () => {
                     scope="col"
                     className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
                   >
+                    Task ID
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Title
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -473,6 +506,9 @@ export const VideoRequests: React.FC = () => {
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Created At
                   </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Expire Date
+                  </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -482,20 +518,18 @@ export const VideoRequests: React.FC = () => {
                 {requests.map((request) => (
                   <tr key={request.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                      <DisplayId value={request.displayId || request.id} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm max-w-[220px] truncate" title={request.title}>
                       <Link
                         to={`/video-requests/${request.id}${location.search}`}
-                        className="font-semibold text-neutral-900 hover:text-primary-600 hover:underline transition"
+                        className="font-semibold text-neutral-900 hover:text-primary-600 hover:underline transition block truncate"
                       >
                         {request.title}
                       </Link>
-                      {request.displayId && (
-                        <div className="mt-1">
-                          <DisplayId value={request.displayId} />
-                        </div>
-                      )}
                       {request.isRestrictedArea && (
                         <div className="mt-1 flex items-center text-xs text-red-600 font-medium">
-                          <AlertTriangle className="mr-1 h-3 w-3" />
+                          <AlertTriangle className="mr-1 h-3 w-3 shrink-0" />
                           Restricted Area ({request.restrictedAreaType})
                         </div>
                       )}
@@ -546,6 +580,9 @@ export const VideoRequests: React.FC = () => {
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {new Date(request.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {getExpiryDisplay(request)}
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 flex items-center justify-end gap-2.5">
                       <Link

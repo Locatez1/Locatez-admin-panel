@@ -180,6 +180,8 @@ export interface VideoRequest {
   source?: "USER" | "DEMO" | string;
   status: "PENDING" | "OPEN" | "ACCEPTED" | "ONGOING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED" | "CANCELLED" | "REJECTED";
   createdAt: string;
+  expiresAt?: string | null;
+  expiresAtIst?: string | null;
   isRestrictedArea?: boolean;
   restrictedAreaType?: string;
   restrictedReason?: string;
