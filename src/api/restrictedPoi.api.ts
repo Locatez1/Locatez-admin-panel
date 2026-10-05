@@ -7,7 +7,7 @@ export interface RestrictedPoiCategory {
   code: string;
   level: RestrictionPoiLevel;
   label: string;
-  tokens: string[];
+  googleTypes: string[];
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -17,33 +17,45 @@ export type CreateRestrictedPoiCategoryInput = {
   code: string;
   level: RestrictionPoiLevel;
   label: string;
-  tokens: string[];
+  googleTypes: string[];
   enabled?: boolean;
 };
 
 export type UpdateRestrictedPoiCategoryInput = {
   level?: RestrictionPoiLevel;
   label?: string;
-  tokens?: string[];
+  googleTypes?: string[];
   enabled?: boolean;
 };
 
+const normalizeCategory = (raw: any): RestrictedPoiCategory => ({
+  ...raw,
+  googleTypes: Array.isArray(raw?.googleTypes) ? raw.googleTypes : [],
+});
+
 const unwrapList = (resData: any): RestrictedPoiCategory[] => {
-  if (Array.isArray(resData)) return resData;
-  if (Array.isArray(resData?.data)) return resData.data;
-  if (Array.isArray(resData?.data?.items)) return resData.data.items;
-  return [];
+  let list: any[] = [];
+  if (Array.isArray(resData)) list = resData;
+  else if (Array.isArray(resData?.data)) list = resData.data;
+  else if (Array.isArray(resData?.data?.items)) list = resData.data.items;
+  return list.map(normalizeCategory);
 };
 
 const unwrapOne = (resData: any): RestrictedPoiCategory => {
-  if (resData?.id && resData?.code) return resData as RestrictedPoiCategory;
-  if (resData?.data?.id) return resData.data as RestrictedPoiCategory;
+  if (resData?.id && resData?.code) return normalizeCategory(resData);
+  if (resData?.data?.id) return normalizeCategory(resData.data);
   throw new Error("Invalid restricted POI category response");
 };
 
 export const listRestrictedPoiCategories = async (): Promise<RestrictedPoiCategory[]> => {
   const response = await apiClient.get("/admin/restricted-poi-categories");
   return unwrapList(response.data);
+};
+
+export const listSupportedGoogleTypes = async (): Promise<string[]> => {
+  const response = await apiClient.get("/admin/restricted-poi-categories/google-types");
+  const data = response.data?.data ?? response.data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const createRestrictedPoiCategory = async (

@@ -6,6 +6,7 @@ import {
   createRestrictedPoiCategory,
   updateRestrictedPoiCategory,
   deleteRestrictedPoiCategory,
+  listSupportedGoogleTypes,
   RestrictedPoiCategory,
   RestrictionPoiLevel,
 } from "../api/restrictedPoi.api";
@@ -27,7 +28,7 @@ type FormState = {
   code: string;
   level: RestrictionPoiLevel;
   label: string;
-  tokens: string;
+  googleTypes: string[];
   enabled: boolean;
 };
 
@@ -35,15 +36,9 @@ const emptyForm = (level: RestrictionPoiLevel = "CONDITIONAL"): FormState => ({
   code: "",
   level,
   label: "",
-  tokens: "",
+  googleTypes: [],
   enabled: true,
 });
-
-const parseTokens = (raw: string): string[] =>
-  raw
-    .split(/[,;\n]+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
 
 export const LocationRestrictions: React.FC = () => {
   const { role } = useAuth();
@@ -61,6 +56,7 @@ export const LocationRestrictions: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [deleting, setDeleting] = useState<RestrictedPoiCategory | null>(null);
+  const [supportedGoogleTypes, setSupportedGoogleTypes] = useState<string[]>([]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -77,7 +73,27 @@ export const LocationRestrictions: React.FC = () => {
 
   useEffect(() => {
     fetchItems();
+    listSupportedGoogleTypes()
+      .then(setSupportedGoogleTypes)
+      .catch(() => setSupportedGoogleTypes([]));
   }, []);
+
+  const googleTypeOwners = useMemo(() => {
+    const owners: Record<string, string> = {};
+    for (const item of items) {
+      if (editing && item.id === editing.id) continue;
+      for (const type of item.googleTypes) owners[type] = item.code;
+    }
+    return owners;
+  }, [items, editing]);
+
+  const toggleGoogleType = (type: string) =>
+    setForm((f) => ({
+      ...f,
+      googleTypes: f.googleTypes.includes(type)
+        ? f.googleTypes.filter((t) => t !== type)
+        : [...f.googleTypes, type],
+    }));
 
   const hardItems = useMemo(
     () => items.filter((i) => i.level === "HARD"),
@@ -101,7 +117,7 @@ export const LocationRestrictions: React.FC = () => {
       code: item.code,
       level: item.level,
       label: item.label,
-      tokens: item.tokens.join(", "),
+      googleTypes: [...item.googleTypes],
       enabled: item.enabled,
     });
     setFormError(null);
@@ -112,13 +128,12 @@ export const LocationRestrictions: React.FC = () => {
     e.preventDefault();
     if (!isAdmin || actionLoading) return;
 
-    const tokens = parseTokens(form.tokens);
     if (!form.label.trim()) {
       setFormError("Label is required.");
       return;
     }
-    if (tokens.length === 0) {
-      setFormError("Provide at least one Mapbox token.");
+    if (form.googleTypes.length === 0) {
+      setFormError("Select at least one Google place type.");
       return;
     }
     if (!editing && !form.code.trim()) {
@@ -133,7 +148,7 @@ export const LocationRestrictions: React.FC = () => {
         const updated = await updateRestrictedPoiCategory(editing.id, {
           level: form.level,
           label: form.label.trim(),
-          tokens,
+          googleTypes: form.googleTypes,
           enabled: form.enabled,
         });
         setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
@@ -143,7 +158,7 @@ export const LocationRestrictions: React.FC = () => {
           code: form.code.trim(),
           level: form.level,
           label: form.label.trim(),
-          tokens,
+          googleTypes: form.googleTypes,
           enabled: form.enabled,
         });
         setItems((prev) => [...prev, created].sort((a, b) => a.code.localeCompare(b.code)));
@@ -230,15 +245,21 @@ export const LocationRestrictions: React.FC = () => {
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-600">{item.label}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {item.tokens.map((token) => (
-                    <span
-                      key={token}
-                      className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-700"
-                    >
-                      {token}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {item.googleTypes.length === 0 ? (
+                    <span className="text-xs italic text-amber-700">
+                      No Google place types — this category never matches
                     </span>
-                  ))}
+                  ) : (
+                    item.googleTypes.map((type) => (
+                      <span
+                        key={type}
+                        className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-700"
+                      >
+                        {type}
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -284,7 +305,8 @@ export const LocationRestrictions: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Location Restrictions</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Manage Mapbox POI categories used for HARD (block) and CONDITIONAL (moderation) checks.
+            Manage the Google place types used for HARD (block) and CONDITIONAL (moderation)
+            checks within 50 m of a request pin.
           </p>
         </div>
         <Button type="button" variant="ghost" onClick={fetchItems} disabled={loading}>
@@ -372,17 +394,38 @@ export const LocationRestrictions: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
-              Mapbox tokens
+              Google place types
             </label>
-            <textarea
-              value={form.tokens}
-              onChange={(e) => setForm((f) => ({ ...f, tokens: e.target.value }))}
-              rows={3}
-              placeholder="hospital, medical_clinic"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            {supportedGoogleTypes.length === 0 ? (
+              <p className="text-xs text-gray-500">Could not load supported Google types.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto rounded-md border border-gray-200 p-2">
+                {supportedGoogleTypes.map((type) => {
+                  const selected = form.googleTypes.includes(type);
+                  const owner = googleTypeOwners[type];
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      disabled={!!owner && !selected}
+                      title={owner ? `Used by ${owner}` : undefined}
+                      onClick={() => toggleGoogleType(type)}
+                      className={`rounded px-2 py-0.5 text-xs font-mono border ${
+                        selected
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : owner
+                            ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <p className="mt-1 text-xs text-gray-500">
-              Comma-separated Mapbox poi_category_ids or maki names.
+              Greyed-out types already belong to another category.
             </p>
           </div>
 
@@ -423,7 +466,7 @@ export const LocationRestrictions: React.FC = () => {
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
             Delete <strong>{deleting?.code}</strong>? New detections will no longer match its
-            tokens. Historical request flags keep the old type string.
+            place types. Historical request flags keep the old type string.
           </p>
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
             <Button

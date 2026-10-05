@@ -17,6 +17,7 @@ import { ServiceAreaSettings, ServiceAreaMode, ServiceArea } from "../types";
 import { Switch } from "../components/common/Switch";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
+import { TelegramAlertsCard } from "../components/settings/TelegramAlertsCard";
 import { Shield, Info, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Globe, MapPin, IndianRupee, Radar, Trash2, Gift, Type, Sparkles } from "lucide-react";
 
 export const Settings: React.FC = () => {
@@ -65,6 +66,7 @@ export const Settings: React.FC = () => {
   const [demoPoiCategories, setDemoPoiCategories] = useState<string[]>([]);
   const [confirmedDemoPoiCategories, setConfirmedDemoPoiCategories] = useState<string[]>([]);
   const [newDemoPoiCategory, setNewDemoPoiCategory] = useState("");
+  const [demoPoiCategoryOptions, setDemoPoiCategoryOptions] = useState<string[]>([]);
   const [demoPoiCategoriesSaving, setDemoPoiCategoriesSaving] = useState(false);
   const [demoPoiCategoriesError, setDemoPoiCategoriesError] = useState<string | null>(null);
 
@@ -139,6 +141,7 @@ export const Settings: React.FC = () => {
       const cats = Array.isArray(vrData.demoPoiCategories) ? vrData.demoPoiCategories : [];
       setDemoPoiCategories(cats);
       setConfirmedDemoPoiCategories(cats);
+      setDemoPoiCategoryOptions(vrData.demoPoiCategoryOptions ?? []);
       setDemoPoiCategoriesError(null);
 
       if (economyData) {
@@ -521,6 +524,10 @@ export const Settings: React.FC = () => {
       setDemoPoiCategoriesError("That category is already in the list.");
       return;
     }
+    if (demoPoiCategoryOptions.length > 0 && !demoPoiCategoryOptions.includes(cat)) {
+      setDemoPoiCategoriesError("Pick a supported Google place type.");
+      return;
+    }
     if (demoPoiCategories.length >= 50) {
       setDemoPoiCategoriesError("Maximum 50 categories.");
       return;
@@ -533,7 +540,7 @@ export const Settings: React.FC = () => {
   const handleSaveDemoPoiCategories = async () => {
     if (!isAdmin || demoPoiCategoriesSaving) return;
     if (demoPoiCategories.length === 0) {
-      setDemoPoiCategoriesError("Add at least one Mapbox POI category.");
+      setDemoPoiCategoriesError("Add at least one Google place type.");
       return;
     }
     setDemoPoiCategoriesSaving(true);
@@ -1371,7 +1378,7 @@ export const Settings: React.FC = () => {
                     </p>
                     <p className="text-xs text-neutral-500">
                       Places a shared demo pin between the min distance and nearby radius using the
-                      Mapbox categories below. Disabling skips already scheduled jobs without
+                      Google place types below. Disabling skips already scheduled jobs without
                       creating requests.
                     </p>
                   </div>
@@ -1430,10 +1437,10 @@ export const Settings: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-900">
-                    Demo Mapbox POI categories
+                    Demo place types
                   </label>
                   <p className="text-xs text-neutral-500">
-                    Mapbox Search Box category ids (e.g. park, cafe, restaurant, temple). Used when
+                    Google place types (e.g. park, cafe, restaurant, hindu_temple). Used when
                     picking the demo location near the user.
                   </p>
                   <div className="flex flex-wrap gap-2 min-h-[2rem]">
@@ -1464,20 +1471,21 @@ export const Settings: React.FC = () => {
                   </div>
                   {isAdmin && (
                     <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. park"
+                      <select
                         value={newDemoPoiCategory}
                         onChange={(e) => setNewDemoPoiCategory(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddDemoPoiCategory();
-                          }
-                        }}
-                        className="block w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        className="block w-56 rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
                         disabled={demoPoiCategoriesSaving}
-                      />
+                      >
+                        <option value="">Select a place type…</option>
+                        {demoPoiCategoryOptions
+                          .filter((opt) => !demoPoiCategories.includes(opt))
+                          .map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                      </select>
                       <Button
                         type="button"
                         size="sm"
@@ -1654,6 +1662,8 @@ export const Settings: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {isAdmin && <TelegramAlertsCard />}
 
           {/* Chat Settings Section */}
           <div className="bg-white shadow sm:rounded-lg border border-gray-200 overflow-hidden">

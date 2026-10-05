@@ -14,6 +14,8 @@ export interface VideoRequestSettings {
   generateDemoDataAfterRegistration: boolean;
   demoPoiMinDistanceMeters: number;
   demoPoiCategories: string[];
+  /** Google place types the backend accepts for demoPoiCategories. */
+  demoPoiCategoryOptions: string[];
 }
 
 export type UpdateVideoRequestSettingsInput = {
@@ -50,16 +52,17 @@ const DEFAULT_VR_SETTINGS: VideoRequestSettings = {
   demoPoiCategories: [
     "park",
     "cafe",
-    "coffee",
+    "coffee_shop",
     "restaurant",
     "shopping_mall",
-    "grocery",
+    "grocery_store",
     "supermarket",
     "hotel",
-    "temple",
+    "hindu_temple",
     "museum",
     "market",
   ],
+  demoPoiCategoryOptions: [],
 };
 
 const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null => {
@@ -112,6 +115,11 @@ const unwrapVideoRequestSettings = (resData: any): VideoRequestSettings | null =
     demoPoiCategories: Array.isArray(candidate.demoPoiCategories)
       ? candidate.demoPoiCategories.filter((c: unknown): c is string => typeof c === "string")
       : [...DEFAULT_VR_SETTINGS.demoPoiCategories],
+    demoPoiCategoryOptions: Array.isArray(candidate.demoPoiCategoryOptions)
+      ? candidate.demoPoiCategoryOptions.filter(
+          (c: unknown): c is string => typeof c === "string"
+        )
+      : [],
   };
 };
 
@@ -173,6 +181,44 @@ export const updateAppEconomySettings = async (input: {
         ? data.welcomeBonusAmount
         : input.welcomeBonusAmount ?? 250,
   };
+};
+
+export interface TelegramAlertSettings {
+  /** True when TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set on the server. */
+  configured: boolean;
+  enabled: boolean;
+  requestApproval: boolean;
+  mediaApproval: boolean;
+  userRegistered: boolean;
+}
+
+export type UpdateTelegramAlertSettingsInput = Partial<Omit<TelegramAlertSettings, "configured">>;
+
+const unwrapTelegramAlertSettings = (resData: any): TelegramAlertSettings => {
+  const data = typeof resData?.enabled === "boolean" ? resData : resData?.data;
+  return {
+    configured: !!data?.configured,
+    enabled: data?.enabled !== false,
+    requestApproval: data?.requestApproval !== false,
+    mediaApproval: data?.mediaApproval !== false,
+    userRegistered: data?.userRegistered !== false,
+  };
+};
+
+export const getTelegramAlertSettings = async (): Promise<TelegramAlertSettings> => {
+  const response = await apiClient.get("/settings/telegram-alerts");
+  return unwrapTelegramAlertSettings(response.data);
+};
+
+export const updateTelegramAlertSettings = async (
+  input: UpdateTelegramAlertSettingsInput
+): Promise<TelegramAlertSettings> => {
+  const response = await apiClient.patch("/settings/telegram-alerts", input);
+  return unwrapTelegramAlertSettings(response.data);
+};
+
+export const sendTelegramTestAlert = async (): Promise<void> => {
+  await apiClient.post("/settings/telegram-alerts/test");
 };
 
 export const getDynamicCopyWords = async (): Promise<string[]> => {
